@@ -11,14 +11,14 @@ from django.contrib.auth import authenticate
 
 class UserViewSet(viewsets.ModelViewSet):
     """
-    User View for Performing CRUD   
+    User View for Performing CRUD operations.
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
 class CustomAuthToken(ObtainAuthToken):
     """
-    To generate token
+    Class to generate token.
     """
     def post(self, request, *args, **kwargs):
         serializer = UserSerializerToken(data=request.data)
@@ -31,6 +31,3 @@ class CustomAuthToken(ObtainAuthToken):
         return Response({
             "token": token.key
         }, status=status.HTTP_200_OK)
-
-
-

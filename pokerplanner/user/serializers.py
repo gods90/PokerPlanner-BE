@@ -18,11 +18,11 @@ class UserSerializer(serializers.ModelSerializer):
         To check if password is of atleast length 8,
         has special character,
         has number
-        and alphabet
+        and alphabets.
         """
         reg = "^(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,}$"
       
-         # compiling regex
+        # compiling regex
         pat = re.compile(reg)
       
         # searching regex                 
@@ -36,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_token(self, obj):
         """
-        To add token in the response
+        To add token in the response.
         """
         token, _ = Token.objects.get_or_create(user=obj)
         return token.key
@@ -44,9 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserSerializerToken(serializers.Serializer):
     """
-    Serializer to validate data when user is logging in
+    Serializer to validate data when user is logging in.
     """
     email = serializers.EmailField()
     password = serializers.CharField()
-
-       
