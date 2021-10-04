@@ -1,3 +1,36 @@
-from django.shortcuts import render
+from pokerplanner.user.models import User
+from pokerplanner.user.serializers import UserSerializerToken
+from pokerplanner.user.serializers import UserSerializer
+from rest_framework import viewsets
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import authenticate
 
-# Create your views here.
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    User View for Performing CRUD   
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class CustomAuthToken(ObtainAuthToken):
+    """
+    To generate token
+    """
+    def post(self, request, *args, **kwargs):
+        serializer = UserSerializerToken(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = authenticate(**serializer.validated_data)
+        if user is None:
+            return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+            "token": token.key
+        }, status=status.HTTP_200_OK)
+
+
+
