@@ -28,7 +28,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework'
+    'rest_framework',
+    'pokerplanner.user',
+    'pokerplanner.pokerboard',
+    'pokerplanner.group'
 ]
 
 MIDDLEWARE = [
@@ -91,3 +94,5 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+
+AUTH_USER_MODEL = "user.User"
