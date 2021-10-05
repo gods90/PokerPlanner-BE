@@ -1,5 +1,7 @@
 import re
+
 from rest_framework import serializers
+
 from pokerplanner.user.models import User
 
 
