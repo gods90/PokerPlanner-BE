@@ -1,18 +1,24 @@
 import re
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
 from pokerplanner.user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    token = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ['id', 'email', 'password', 'first_name', 'last_name','token']
+        fields = ['id', 'email', 'password', 'first_name', 'last_name']
         extra_kwargs = {
             'password': {'write_only': True}
         }
 
+    def create(self, validated_data):
+        print(type(self))
+        password = validated_data['password']
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+    
     def validate_password(self, password):
         """
         To check if password is of atleast length 8,
@@ -33,13 +39,6 @@ class UserSerializer(serializers.ModelSerializer):
                                                "must contain one uppercase, one lowercase " 
                                                "one special character!")
         return super().validate(password)
-
-    def get_token(self, obj):
-        """
-        To add token in the response.
-        """
-        token, _ = Token.objects.get_or_create(user=obj)
-        return token.key
 
 
 class UserSerializerToken(serializers.Serializer):
