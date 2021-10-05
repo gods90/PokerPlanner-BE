@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from pokerplanner.pokerboard.models import Pokerboard, PokerboardUserMapping, UserEstimate, Invite, Ticket
+from pokerboard.models import Pokerboard, PokerboardUserMapping, UserEstimate, Invite, Ticket
 
 admin.site.register(Pokerboard)
 admin.site.register(PokerboardUserMapping)

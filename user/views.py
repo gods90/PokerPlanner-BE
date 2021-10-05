@@ -6,9 +6,9 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework import viewsets
 
-from pokerplanner.user.models import User
-from pokerplanner.user.serializers import UserSerializer
-from pokerplanner.user.serializers import UserSerializerToken
+from user.models import User
+from user.serializers import UserSerializer
+from user.serializers import UserSerializerToken
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -19,11 +19,10 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
 
-class CustomAuthToken(ObtainAuthToken):
+class LoginView(ObtainAuthToken):
     """
     Class to generate token.
     """
-
     def post(self, request, *args, **kwargs):
         serializer = UserSerializerToken(data=request.data)
         serializer.is_valid(raise_exception=True)

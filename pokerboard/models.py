@@ -1,8 +1,9 @@
 from django.db import models
 
-from pokerplanner.group.models import Group
-from pokerplanner.user.models import User
-from pokerplanner.pokerboard import constants
+from group.models import Group
+from user.models import User
+from pokerboard import constants
+
 
 class Pokerboard(models.Model):
     """ Model to store Pokerboard settings."""
@@ -43,7 +44,7 @@ class PokerboardUserMapping(models.Model):
     """
     Model to store mappings of pokerboards to users.
     """
-    ROLE_CHOICES = (constants.PLAYER,constants.MANAGER,constants.SPECTATOR)
+    ROLE_CHOICES = (constants.PLAYER, constants.MANAGER, constants.SPECTATOR)
     pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_role = models.IntegerField(
@@ -107,7 +108,6 @@ class Invite(models.Model):
     """
     Model to store invites
     """
-    
     pokerboard = models.ForeignKey(
         Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard of which invite has been sent.')
     user = models.ForeignKey(

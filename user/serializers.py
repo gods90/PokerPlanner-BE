@@ -1,8 +1,7 @@
 import re
 
 from rest_framework import serializers
-
-from pokerplanner.user.models import User
+from user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
