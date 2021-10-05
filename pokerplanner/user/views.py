@@ -18,10 +18,12 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+
 class CustomAuthToken(ObtainAuthToken):
     """
     Class to generate token.
     """
+
     def post(self, request, *args, **kwargs):
         serializer = UserSerializerToken(data=request.data)
         serializer.is_valid(raise_exception=True)

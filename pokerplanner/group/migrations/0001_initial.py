@@ -16,9 +16,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Group',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='Name of the group', max_length=250)),
-                ('users', models.ManyToManyField(help_text='Members of the group', to=settings.AUTH_USER_MODEL)),
+                ('id', models.AutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(
+                    help_text='Name of the group', max_length=250)),
+                ('users', models.ManyToManyField(
+                    help_text='Members of the group', to=settings.AUTH_USER_MODEL)),
             ],
         ),
     ]
