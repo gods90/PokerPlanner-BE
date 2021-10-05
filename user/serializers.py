@@ -1,12 +1,13 @@
 import re
 from rest_framework import serializers
-from pokerplanner.user.models import User
+from user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id','username', 'email', 'password', 'first_name', 'last_name']
+        fields = ['id', 'username', 'email',
+                  'password', 'first_name', 'last_name']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -20,7 +21,7 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
-    
+
     def validate_password(self, password):
         """
         To check if password is of atleast length 8,
@@ -29,17 +30,17 @@ class UserSerializer(serializers.ModelSerializer):
         and alphabets.
         """
         reg = "^(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,}$"
-      
+
         # compiling regex
         pat = re.compile(reg)
-      
-        # searching regex                 
+
+        # searching regex
         mat = re.search(pat, password)
         if not mat:
             raise serializers.ValidationError("Password should be atleast of length 8,"
-                                               "one number "
-                                               "must contain one uppercase, one lowercase " 
-                                               "one special character!")
+                                              "one number "
+                                              "must contain one uppercase, one lowercase "
+                                              "one special character!")
         return super().validate(password)
 
 
@@ -49,3 +50,5 @@ class UserSerializerToken(serializers.Serializer):
     """
     email = serializers.EmailField()
     password = serializers.CharField()
+
+

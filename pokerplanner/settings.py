@@ -10,12 +10,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 with open(os.path.join(BASE_DIR, 'secrets.json')) as secrets_file:
     secrets = json.load(secrets_file)
 
+
 def get_secret(setting, secrets=secrets):
     """Get secret setting or fail with ImproperlyConfigured"""
     try:
         return secrets[setting]
     except KeyError:
         raise ImproperlyConfigured("Set the {} setting".format(setting))
+
 
 SECRET_KEY = get_secret('SECRET_KEY')
 
@@ -30,9 +32,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'pokerplanner.user',
-    'pokerplanner.pokerboard',
-    'pokerplanner.group'
+    'user',
+    'pokerboard',
+    'group'
 ]
 
 MIDDLEWARE = [
@@ -103,3 +105,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = "user.User"
+
+

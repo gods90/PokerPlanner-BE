@@ -17,6 +17,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='group',
             name='users',
-            field=models.ManyToManyField(help_text='Members of the group', to=settings.AUTH_USER_MODEL),
+            field=models.ManyToManyField(
+                help_text='Members of the group', to=settings.AUTH_USER_MODEL),
         ),
     ]
