@@ -1,12 +1,14 @@
-from pokerplanner.user.models import User
-from pokerplanner.user.serializers import UserSerializerToken
-from pokerplanner.user.serializers import UserSerializer
-from rest_framework import viewsets
+from django.contrib.auth import authenticate
+
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework import viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import authenticate
+
+from pokerplanner.user.models import User
+from pokerplanner.user.serializers import UserSerializer
+from pokerplanner.user.serializers import UserSerializerToken
 
 
 class UserViewSet(viewsets.ModelViewSet):
