@@ -1,25 +1,13 @@
-from pathlib import Path
-import json
+from dotenv import dotenv_values
 import os
-from django.core.exceptions import ImproperlyConfigured
 
+from django.core.exceptions import ImproperlyConfigured
 DEBUG = True
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-with open(os.path.join(BASE_DIR, 'secrets.json')) as secrets_file:
-    secrets = json.load(secrets_file)
-
-
-def get_secret(setting, secrets=secrets):
-    """Get secret setting or fail with ImproperlyConfigured"""
-    try:
-        return secrets[setting]
-    except KeyError:
-        raise ImproperlyConfigured("Set the {} setting".format(setting))
-
-
-SECRET_KEY = get_secret('SECRET_KEY')
+config = dotenv_values(".env")
+SECRET_KEY = config["SECRET_KEY"]
 
 ALLOWED_HOSTS = []
 
@@ -74,7 +62,14 @@ REST_FRAMEWORK = {
 WSGI_APPLICATION = 'pokerplanner.wsgi.application'
 
 DATABASES = {
-    "default": get_secret('DB_CRED')
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": config['DATABASE_NAME'],
+        "USER": config['DATABASE_USERNAME'],
+        "PASSWORD": config['DATABASE_PASSWORD'],
+        "HOST": "localhost",
+        "PORT": ""
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
