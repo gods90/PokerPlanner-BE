@@ -30,7 +30,7 @@ class Pokerboard(models.Model):
         User, on_delete=models.CASCADE, help_text='Owner of pokerboard.')
     title = models.CharField(max_length=50, help_text='Name of Pokerboard.')
     description = models.CharField(
-        max_length=100, help_text='Description of POkerboard.')
+        max_length=100, help_text='Description of Pokerboard.')
     configuration = models.IntegerField(
         choices=ESTIMATION_CHOICES, default=SERIES, help_text='Estimation type.')
     status = models.PositiveSmallIntegerField(
