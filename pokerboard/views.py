@@ -1,3 +1,9 @@
-from django.shortcuts import render
+from rest_framework import viewsets
 
-# Create your views here.
+from pokerboard.models import Pokerboard,Ticket
+
+
+class PokerBoardViewSet(viewsets.ModelViewSet):
+    """
+    Pokerboard View for CRUD operations
+    """
