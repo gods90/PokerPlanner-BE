@@ -45,9 +45,3 @@ class UserSerializer(serializers.ModelSerializer):
         return super().validate(password)
 
 
-class UserSerializerToken(serializers.Serializer):
-    """
-    Serializer to validate data when user is logging in.
-    """
-    email = serializers.EmailField()
-    password = serializers.CharField()
