@@ -1,5 +1,4 @@
-from django.db.models import fields, manager
-from rest_framework import serializers, status
+from rest_framework import serializers
 
 from pokerboard.models import Pokerboard,Ticket
 from user.serializers import UserSerializer
@@ -8,7 +7,7 @@ class PokerBoardSerializer(serializers.ModelSerializer):
     manager = UserSerializer()
     class Meta:
         model = Pokerboard
-        fields = ['manager','title','description','configuration','status']
+        fields = ['id','manager','title','description','configuration','status']
     
 
 class TicketSerializer(serializers.ModelSerializer):

@@ -1,13 +1,13 @@
-from dotenv import dotenv_values
 import os
+from dotenv import load_dotenv
+from atlassian import Jira
 
-from django.core.exceptions import ImproperlyConfigured
 DEBUG = True
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-config = dotenv_values(".env")
-SECRET_KEY = config["SECRET_KEY"]
+load_dotenv()
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 ALLOWED_HOSTS = []
 
@@ -67,9 +67,9 @@ WSGI_APPLICATION = 'pokerplanner.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": config['DATABASE_NAME'],
-        "USER": config['DATABASE_USERNAME'],
-        "PASSWORD": config['DATABASE_PASSWORD'],
+        "NAME": os.environ['DATABASE_NAME'],
+        "USER": os.environ['DATABASE_USERNAME'],
+        "PASSWORD": os.environ['DATABASE_PASSWORD'],
         "HOST": "localhost",
         "PORT": ""
     }
@@ -105,6 +105,12 @@ STATIC_URL = '/static/'
 AUTH_USER_MODEL = "user.User"
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+JIRA = Jira(
+    url = os.environ['JIRA_URL'],
+    username = os.environ['JIRA_USERNAME'],
+    password = os.environ['JIRA_PASSWORD']
+)
 
 # CORS_ALLOWED_ORIGINS = [
 #     'http://localhost:5500',
