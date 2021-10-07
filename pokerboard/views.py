@@ -1,4 +1,4 @@
-from rest_framework import status, viewsets
+from rest_framework import serializers, status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -52,16 +52,33 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         if response.status_code != 200:
             return response
 
+        jira = settings.JIRA
         pokerboard_id = kwargs['pk']
         pokerboard = Pokerboard.objects.get(pk=pokerboard_id)
+        
+        #If sprint, then fetch all tickets in sprint and add
+        if 'sprint' in request.data.keys():
+            sprint_id = request.data['sprint']
+            issues = jira.get_sprint_issues(sprint_id,0,50)['issues']
+            request.data['tickets'] = []
+            for issue in issues:
+                request.data['tickets'].append(issue['key'])
+
         #Adding tickets
         if 'tickets' in request.data.keys():
             tickets = request.data['tickets']
-            jira = settings.JIRA
+            
             ticket_responses = []
             for ticket in tickets:
                 ticket_response = {}
+                        
                 try:
+                    #Check if ticket is already part of another pokerboard
+                    obj = Ticket.objects.filter(ticket_id=ticket)
+                    if obj.exists():
+                        if pokerboard != obj[0].pokerboard:
+                            raise Exception('Ticket part of another pokerboard.')
+                    
                     jira_response = jira.issue(key=ticket)['fields']
                     ticket_response = {**jira_response['status']}
                     ticket_response['estimate'] = jira_response['customfield_10016']
@@ -73,17 +90,21 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                 ticket_response['key'] = ticket
                 ticket_responses.append(ticket_response)
 
-        for ticket_response in ticket_responses:
-            if ticket_response['status_code'] == 400:
-                continue
-            new_ticket_data = {}
-            new_ticket_data['pokerboard'] = pokerboard_id
-            new_ticket_data['ticket_id'] = ticket_response['key']
-            new_ticket_data['order'] = pokerboard.ticket_set.count()
-            serializer = TicketUpdateSerializer(data=new_ticket_data)
-            serializer.is_valid(raise_exception=True)
-            Ticket.objects.update_or_create(**serializer.validated_data)
-        response.data['ticket_responses'] = ticket_responses
+            for ticket_response in ticket_responses:
+                if ticket_response['status_code'] == 400:
+                    continue
+                new_ticket_data = {}
+                new_ticket_data['pokerboard'] = pokerboard_id
+                new_ticket_data['ticket_id'] = ticket_response['key']
+                new_ticket_data['order'] = pokerboard.ticket_set.count()
+                serializer = TicketUpdateSerializer(data=new_ticket_data)
+                serializer.is_valid(raise_exception=True)
+                try:
+                    obj = Ticket.objects.get(ticket_id=ticket_response['key'])
+                except Exception:
+                    obj = Ticket.objects.create(**serializer.validated_data)
+
+            response.data['ticket_responses'] = ticket_responses
         return response
 
 

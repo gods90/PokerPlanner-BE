@@ -6,7 +6,7 @@ DEBUG = True
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-load_dotenv()
+load_dotenv(verbose=True)
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 ALLOWED_HOSTS = []

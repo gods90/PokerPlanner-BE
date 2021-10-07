@@ -7,3 +7,4 @@ admin.site.register(PokerboardUserMapping)
 admin.site.register(Ticket)
 admin.site.register(UserEstimate)
 admin.site.register(Invite)
+

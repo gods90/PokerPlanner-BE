@@ -7,3 +7,4 @@ ROLE_CHOICES = (
     (MANAGER, 'MANAGER'),
     (SPECTATOR, 'SPECTATOR'),
 )
+

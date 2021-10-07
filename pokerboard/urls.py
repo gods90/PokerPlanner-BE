@@ -10,3 +10,4 @@ router.register('', PokerBoardViewSet)
 urlpatterns = [
     path("", include(router.urls)),
 ]
+
