@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from pokerboard.models import Pokerboard,Ticket
-from pokerboard.serializers import PokerBoardSerializer, PokerBoardCreationSerializer, TicketSerializer
+from pokerboard.serializers import PokerBoardSerializer, PokerBoardCreationSerializer, TicketUpdateSerializer
 
 from django.conf import settings
 
@@ -16,8 +16,6 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
-    def create(self, request, *args, **kwargs):
         """
         Create new pokerboard
         Required : Token in header, Title, Description
@@ -27,7 +25,6 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         manager = request.user
         pokerboard = Pokerboard.objects.create(manager=manager,**serializer.data)
-        pokerboard.save()
         serializer = PokerBoardSerializer(instance=pokerboard)
         return Response(serializer.data,status=status.HTTP_201_CREATED)
         
@@ -76,6 +73,16 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                 ticket_response['key'] = ticket
                 ticket_responses.append(ticket_response)
 
+        for ticket_response in ticket_responses:
+            if ticket_response['status_code'] == 400:
+                continue
+            new_ticket_data = {}
+            new_ticket_data['pokerboard'] = pokerboard_id
+            new_ticket_data['ticket_id'] = ticket_response['key']
+            new_ticket_data['order'] = pokerboard.ticket_set.count()
+            serializer = TicketUpdateSerializer(data=new_ticket_data)
+            serializer.is_valid(raise_exception=True)
+            Ticket.objects.update_or_create(**serializer.validated_data)
         response.data['ticket_responses'] = ticket_responses
         return response
 

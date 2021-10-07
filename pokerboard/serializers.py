@@ -21,3 +21,8 @@ class PokerBoardCreationSerializer(serializers.Serializer):
     description = serializers.CharField()
     configuration = serializers.IntegerField(required=False, allow_null=True)
 
+class TicketUpdateSerializer(serializers.Serializer):
+    pokerboard = serializers.PrimaryKeyRelatedField(queryset=Pokerboard.objects.all())
+    ticket_id = serializers.CharField()
+
+

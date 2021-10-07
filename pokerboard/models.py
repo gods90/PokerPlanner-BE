@@ -74,9 +74,10 @@ class Ticket(models.Model):
     pokerboard = models.ForeignKey(
         Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.')
     ticket_id = models.CharField(
+        unique=True,
         max_length=100, help_text='Ticket ID imported from JIRA.')
     order = models.PositiveSmallIntegerField(help_text='Rank of ticket.')
-    estimation_date = models.DateField()
+    estimation_date = models.DateField(null=True, blank=True,help_text="Date on which ticket was estimated")
     status = models.IntegerField(
         choices=STATUS_CHOICES,
         default=NOTSTARTED,
@@ -85,7 +86,7 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f'{self.ticket_id} -> {self.pokerboard}'
-
+    
 
 class UserEstimate(models.Model):
     """
@@ -127,3 +128,5 @@ class Invite(models.Model):
             return f'Invitee: {self.user} -> Pokerboard: {self.pokerboard} -> Group: {self.group}'
         else:
             return f'Invitee: {self.user} -> Pokerboard: {self.pokerboard}'
+
+
