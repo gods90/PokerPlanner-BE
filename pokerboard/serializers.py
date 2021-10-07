@@ -1,3 +1,4 @@
+from django.db.models import fields
 from rest_framework import serializers
 
 from pokerboard.models import Pokerboard,Ticket
@@ -14,16 +15,19 @@ class PokerBoardSerializer(serializers.ModelSerializer):
     ticket = TicketSerializer(source='ticket_set',many=True)
     class Meta:
         model = Pokerboard
-        fields = ['id','manager','title','description','configuration','status','ticket']
+        fields = ['id', 'manager', 'title', 'description', 'configuration', 'status', 'ticket']
 
 
-class PokerBoardCreationSerializer(serializers.Serializer):
-    title = serializers.CharField()
-    description = serializers.CharField()
-    configuration = serializers.IntegerField(required=False, allow_null=True)
+class PokerBoardCreationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pokerboard
+        fields = ['title','description','configuration']
 
-class TicketUpdateSerializer(serializers.Serializer):
-    pokerboard = serializers.PrimaryKeyRelatedField(queryset=Pokerboard.objects.all())
-    ticket_id = serializers.CharField()
-    order = serializers.IntegerField()
+class SprintSerializer(serializers.Serializer):
+    sprint_id = serializers.CharField()
 
+class TicketsSerializer(serializers.ListSerializer):
+    child = serializers.CharField()
+
+
+    

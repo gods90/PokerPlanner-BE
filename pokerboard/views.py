@@ -1,11 +1,13 @@
-from rest_framework import serializers, status, viewsets
+import requests
+from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from pokerboard.models import Pokerboard,Ticket
-from pokerboard.serializers import PokerBoardSerializer, PokerBoardCreationSerializer, TicketUpdateSerializer
+from pokerboard.serializers import PokerBoardSerializer, PokerBoardCreationSerializer, SprintSerializer, TicketsSerializer
 
 from django.conf import settings
+
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
     """
@@ -23,8 +25,7 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         """
         serializer = PokerBoardCreationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        manager = request.user
-        pokerboard = Pokerboard.objects.create(manager=manager,**serializer.data)
+        pokerboard = Pokerboard.objects.create(manager=request.user,**serializer.data)
         serializer = PokerBoardSerializer(instance=pokerboard)
         return Response(serializer.data,status=status.HTTP_201_CREATED)
         
@@ -34,6 +35,10 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         Update pokerboard details - title,description,config
         Request : 
             Required params : pokerboard_id
+            Add new sprint  -
+                param_name : sprint_id
+                type : string
+                example : 3
             Add new tickets - 
                 param_name : tickets 
                 type : array
@@ -57,53 +62,59 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         pokerboard = Pokerboard.objects.get(pk=pokerboard_id)
         
         #If sprint, then fetch all tickets in sprint and add
-        if 'sprint' in request.data.keys():
-            sprint_id = request.data['sprint']
-            issues = jira.get_sprint_issues(sprint_id,0,50)['issues']
-            request.data['tickets'] = []
-            for issue in issues:
-                request.data['tickets'].append(issue['key'])
+        if 'sprint_id' in request.data.keys():
+            sprint_serializer = SprintSerializer(data=request.data)
+            sprint_serializer.is_valid(raise_exception=True)
+            sprint_id = sprint_serializer.validated_data['sprint_id']
+            try:
+                issues = jira.get_sprint_issues(sprint_id,0,50)['issues']
+                request.data['tickets'] = []
+                for issue in issues:
+                    request.data['tickets'].append(issue['key'])
+            except requests.exceptions.RequestException as e:
+                return Response({'error' : str(e)},status=status.HTTP_404_NOT_FOUND)
 
         #Adding tickets
         if 'tickets' in request.data.keys():
             tickets = request.data['tickets']
-            
+            serializer = TicketsSerializer(data=tickets)
+            serializer.is_valid(raise_exception=True)
             ticket_responses = []
             for ticket in tickets:
-                ticket_response = {}
-                        
+                ticket_response = {}   
                 try:
                     #Check if ticket is already part of another pokerboard
                     obj = Ticket.objects.filter(ticket_id=ticket)
                     if obj.exists():
                         if pokerboard != obj[0].pokerboard:
                             raise Exception('Ticket part of another pokerboard.')
-                    
+                        if pokerboard == obj[0].pokerboard:
+                            raise Exception('Ticket already part of pokerboard')
+                    #Checking with JIRA
                     jira_response = jira.issue(key=ticket)['fields']
-                    ticket_response = {**jira_response['status']}
                     ticket_response['estimate'] = jira_response['customfield_10016']
                     ticket_response['status_code'] = status.HTTP_200_OK
                 except Exception as e:
                     ticket_response['message'] = str(e)
-                    ticket_response['status_code'] = status.HTTP_400_BAD_REQUEST
+                    ticket_response['status_code'] = status.HTTP_404_NOT_FOUND
 
                 ticket_response['key'] = ticket
                 ticket_responses.append(ticket_response)
 
+            count = pokerboard.ticket_set.count()
+            
             for ticket_response in ticket_responses:
-                if ticket_response['status_code'] == 400:
+                if ticket_response['status_code'] != 200:
                     continue
                 new_ticket_data = {}
-                new_ticket_data['pokerboard'] = pokerboard_id
+                new_ticket_data['pokerboard'] = pokerboard
                 new_ticket_data['ticket_id'] = ticket_response['key']
-                new_ticket_data['order'] = pokerboard.ticket_set.count()
-                serializer = TicketUpdateSerializer(data=new_ticket_data)
-                serializer.is_valid(raise_exception=True)
-                try:
-                    obj = Ticket.objects.get(ticket_id=ticket_response['key'])
-                except Exception:
-                    obj = Ticket.objects.create(**serializer.validated_data)
-
+                count += 1
+                new_ticket_data['order'] = count
+                ticket_id = ticket_response['key']
+                ticket_response.pop('key')
+                Ticket.objects.get_or_create(ticket_id=ticket_id,defaults={**new_ticket_data})
+                ticket_response['key'] = ticket_id
             response.data['ticket_responses'] = ticket_responses
         return response
 
