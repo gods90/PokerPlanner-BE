@@ -13,3 +13,5 @@ class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView)
 
     def get_object(self):
         return self.request.user
+
+
