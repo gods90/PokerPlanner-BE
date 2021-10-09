@@ -1,10 +1,8 @@
-from rest_framework import viewsets,status
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from pokerboard.models import Pokerboard
-from pokerboard.serializers import PokerBoardCreationSerializer
-
+from pokerboard.serializers import PokerBoardCreationSerializer, PokerBoardSerializer
 
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
@@ -15,6 +13,11 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
     serializer_class = PokerBoardCreationSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return PokerBoardCreationSerializer
+        return PokerBoardSerializer
+
     def create(self, request, *args, **kwargs):
         """
         Create new pokerboard
@@ -22,9 +25,6 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         Optional : Configuration
         """
         request.data['manager_id'] = request.user.id
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return super().create(request, *args, **kwargs)
+
 
