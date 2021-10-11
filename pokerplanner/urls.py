@@ -11,6 +11,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('user/', include('user.urls')),
     path('pokerboard/', include('pokerboard.urls')),
+    path('group/', include('group.urls')),
     path('login/', ObtainAuthToken.as_view(), name='token-auth'),
     path('api/docs/', schema_view)
 ]
