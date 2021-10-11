@@ -28,7 +28,7 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Invalid user!')
         if self.instance.created_by == user[0]:
             raise serializers.ValidationError('Admin cannot join again!')
-        if user[0] in self.instance.users.all():
+        if self.instance.users.filter(email=attrs).exists():
             raise serializers.ValidationError('Already a member!')
         return super().validate(attrs)
 
