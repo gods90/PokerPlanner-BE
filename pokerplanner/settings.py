@@ -111,7 +111,3 @@ JIRA = Jira(
     username = os.environ['JIRA_USERNAME'],
     password = os.environ['JIRA_PASSWORD']
 )
-
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:5500',
-# ]

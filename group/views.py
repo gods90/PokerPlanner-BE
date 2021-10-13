@@ -1,7 +1,7 @@
+from rest_framework import viewsets
+
 from group.models import Group
 from group.serializer import GroupSerializer, GroupUpdateSerializer
-
-from rest_framework import viewsets
 
 
 class GroupViewSet(viewsets.ModelViewSet):
