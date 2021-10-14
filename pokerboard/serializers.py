@@ -1,6 +1,8 @@
 from rest_framework import serializers, status
+from group import serializer
+from pokerboard import constants
 
-from pokerboard.models import Pokerboard, Ticket
+from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 
 from user.models import User
 from user.serializers import UserSerializer
@@ -19,6 +21,18 @@ class TicketSerializer(serializers.ModelSerializer):
 
 class TicketsSerializer(serializers.ListSerializer):
     child = serializers.CharField()
+
+
+class PokerboardUserGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PokerboardUserGroup
+        fields = ['id', 'user', 'group', 'role', 'pokerboard']
+
+
+class PokerboardUserSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    role = serializers.ChoiceField(
+        choices=constants.ROLE_CHOICES, required=False)
 
 
 class PokerBoardSerializer(serializers.ModelSerializer):
@@ -101,6 +115,10 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
                 ticket_responses.append(ticket_response)
         return ticket_responses
 
+    def update(self, instance, validated_data):
+        print(validated_data)
+        return super().update(instance, validated_data)
+
     def create(self, validated_data):
         count = 0
         new_pokerboard = {key: val for key, val in self.data.items() if key not in [
@@ -126,5 +144,3 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
             Ticket.objects.create(**new_ticket_data)
             count += 1
         return pokerboard
-
-
