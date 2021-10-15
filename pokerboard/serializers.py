@@ -1,12 +1,12 @@
 import requests
 
-from rest_framework import serializers, status
-
 from django.conf import settings
+
+from rest_framework import serializers, status
 
 from pokerboard.models import Pokerboard, Ticket
 from user.models import User
-from user.serializers import UserSerializer
+from user.serializer.serializers import UserSerializer
 
 
 class TicketSerializer(serializers.ModelSerializer):

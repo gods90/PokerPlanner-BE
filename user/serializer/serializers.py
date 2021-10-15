@@ -1,17 +1,19 @@
 import re
 
 from rest_framework import serializers
-
+from group.serializer.serializers2 import GetGroupSerializer
 from user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    group=GetGroupSerializer(source="group_set",many=True)
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
-                  'password', 'first_name', 'last_name']
+                  'password', 'first_name', 'last_name','group']
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'group': {'read_only':True}
         }
 
     def create(self, validated_data):
@@ -44,5 +46,4 @@ class UserSerializer(serializers.ModelSerializer):
                                               "must contain one uppercase, one lowercase "
                                               "one special character!")
         return super().validate(password)
-
 

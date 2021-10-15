@@ -1,7 +1,11 @@
+import re
 from rest_framework import viewsets
+from rest_framework import status
+from rest_framework.response import Response
 
 from group.models import Group
-from group.serializer import GroupSerializer, GroupUpdateSerializer
+from group.serializer.serializers import GroupSerializer, GroupUpdateSerializer
+from pokerboard import serializers
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -10,7 +14,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
-
+    
     def get_serializer_class(self, *args, **kwargs):
         method = self.request.method
         if method == 'PATCH':
@@ -18,6 +22,11 @@ class GroupViewSet(viewsets.ModelViewSet):
         return super().get_serializer_class(*args, **kwargs)
 
     def create(self, request, *args, **kwargs):
-        request.data['created_by'] = request.user.id
-        return super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data={**request.data,'created_by':request.user.id})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    
 

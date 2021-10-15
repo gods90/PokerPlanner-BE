@@ -1,7 +1,7 @@
 from rest_framework import generics
 
 from user.models import User
-from user.serializers import UserSerializer
+from user.serializer.serializers import UserSerializer
 
 
 class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView):
