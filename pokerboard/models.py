@@ -119,7 +119,7 @@ class Invite(models.Model):
         User, on_delete=models.CASCADE, help_text='User which is invited.')
     user_role = models.IntegerField(
         choices=constants.ROLE_CHOICES,
-        default=constants.ROLE_CHOICES[0],
+        default=constants.PLAYER,
         help_text='Default user role is player',
     )
     is_accepted = models.BooleanField(default=False)

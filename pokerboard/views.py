@@ -4,10 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from pokerboard.models import Pokerboard, PokerboardUserGroup
-from pokerboard.serializers import PokerBoardCreationSerializer, PokerBoardSerializer, PokerboardUserGroupSerializer, PokerboardUserSerializer
+from pokerboard.serializers import InviteCreateSerializer, InviteSerializer, PokerBoardCreationSerializer, PokerBoardSerializer, PokerboardUserGroupSerializer, PokerboardUserSerializer
 
 from user.models import User
 
+from group.models import Group
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
     """
@@ -17,12 +18,6 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
     serializer_class = PokerBoardCreationSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return PokerBoardCreationSerializer
-        if self.request.method == 'PATCH':
-            return
-        return PokerBoardSerializer
 
     def create(self, request, *args, **kwargs):
         """
@@ -33,52 +28,66 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         request.data['manager_id'] = request.user.id
         return super().create(request, *args, **kwargs)
 
-    @action(detail=True, methods=['post', 'delete', 'patch'])
+    @action(detail=True, methods=['post', 'delete'])
+    def invite(self,request,pk=None):
+        """
+        Method to invite user/group to pokerboard
+        Route: /pokerboard/{pk}/invite/ 
+        Method : post - Create invitation
+                delete - Delete invitation
+        """
+        pokerboard_id = self.kwargs['pk']
+        #TODO : Send mail for signup if doesnt exist
+        users = []
+        group_id = None
+
+        serializer = InviteCreateSerializer(data=request.data,context={'pokerboard_id' : pokerboard_id})
+        serializer.is_valid(raise_exception=True)
+
+        if 'email' in request.data.keys():
+            user = User.objects.get(email=request.data['email'])
+            users.append(user)
+        elif 'group_id' in request.data.keys():
+            group_id = request.data['group_id']
+            group = Group.objects.get(id=group_id)
+            users = group.users.all()
+
+        if len(users) == 0:
+            raise serializers.ValidationError('No users!')
+
+        if request.method == 'POST':
+            for user in users:
+                serializer = InviteSerializer(data={**request.data,'pokerboard' : pokerboard_id,'user' : user.id,'group' : group_id})
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+            return Response(data=serializer.data)
+        return Response()
+
+
+    @action(detail=True, methods=['delete', 'patch'])
     def user(self, request, pk=None):
         """
-        Method to add/remove user from pokerboard
+        Method to remove/patch user from pokerboard
         Route: /pokerboard/{pk}/user/ 
-        Method : post - Add user
-                delete - Remove user
+        Method : delete - Remove user
                 patch  - Change user role
         """
         pokerboard_id = self.kwargs['pk']
-        request.data['pokerboard'] = pokerboard_id
-        serializer = PokerboardUserSerializer(data=request.data)
+        serializer = PokerboardUserSerializer(data={**request.data,'pokerboard' : pokerboard_id},context={'method' : request.method,'pk' : pokerboard_id,'email' : request.data['email']})
         serializer.is_valid(raise_exception=True)
 
-        if request.method == 'POST':
-            user = User.objects.get(email=serializer.data['email'])
-            request.data['user'] = user.id
-            if PokerboardUserGroup.objects.filter(pokerboard_id=pokerboard_id, user_id=user.id).exists():
-                raise serializers.ValidationError(
-                    {'error': 'User already member of pokerboard!'})
-            serializer = PokerboardUserGroupSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            pokerboard_user = PokerboardUserGroup.objects.create(
-                **serializer.validated_data)
-            serializer = PokerboardUserGroupSerializer(
-                instance=pokerboard_user)
-            return Response(status=status.HTTP_201_CREATED, data=serializer.data)
-
         user = User.objects.get(email=serializer.validated_data['email'])
-        pokerboard_user = PokerboardUserGroup.objects.filter(
+        pokerboard_user = PokerboardUserGroup.objects.get(
             pokerboard_id=pokerboard_id, user_id=user.id)
-        if not pokerboard_user.exists():
-            raise serializers.ValidationError(
-                {'error': 'User not a member of pokerboard!'})
-
-        elif request.method == 'DELETE':
-            pokerboard_user[0].delete()
+            
+        if request.method == 'DELETE':
+            pokerboard_user.delete()
             return Response(status=status.HTTP_200_OK)
 
-        elif request.method == 'PATCH':
-            pokerboard_user = PokerboardUserGroup.objects.get(
-                pokerboard_id=pokerboard_id, user_id=user.id)
-            if 'role' not in serializer.validated_data.keys():
-                raise serializers.ValidationError('Invalid role')
+        if request.method == 'PATCH':
             pokerboard_user.role = serializer.validated_data['role']
             pokerboard_user.save()
             serializer = PokerboardUserGroupSerializer(
                 instance=pokerboard_user)
             return Response(status=status.HTTP_200_OK, data=serializer.data)
+
