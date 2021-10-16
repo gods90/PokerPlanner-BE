@@ -28,13 +28,15 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         request.data['manager_id'] = request.user.id
         return super().create(request, *args, **kwargs)
 
-    @action(detail=True, methods=['post', 'delete'])
+    @action(detail=True, methods=['post'])
     def invite(self,request,pk=None):
         """
         Method to invite user/group to pokerboard
         Route: /pokerboard/{pk}/invite/ 
         Method : post - Create invitation
-                delete - Delete invitation
+        params : 
+            Required : Either email or group_id
+            Optional : role - 0/1
         """
         pokerboard_id = self.kwargs['pk']
         #TODO : Send mail for signup if doesnt exist
@@ -61,7 +63,8 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
             return Response(data=serializer.data)
-        return Response()
+        
+
 
 
     @action(detail=True, methods=['delete', 'patch'])
