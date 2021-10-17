@@ -60,15 +60,12 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                 group = Group.objects.get(id=group_id)
                 users = group.users.all()
 
-            if len(users) == 0:
-                raise serializers.ValidationError('No users!')
-
             for user in users:
                 serializer = InviteSerializer(
                     data={**request.data, 'pokerboard': pokerboard_id, 'user': user.id, 'group': group_id})
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-            return Response(data=serializer.data)
+            return Response()
 
         if request.method == 'PATCH':
             user = request.user
@@ -77,8 +74,8 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                     user_id=user.id, pokerboard_id=pokerboard_id)
                 invite.is_accepted = True
                 invite.save()
-            except Invite.DoesNotExist as e:
-                raise serializers.ValidationError('invite to hoja bsdk')
+            except Invite.DoesNotExist:
+                raise serializers.ValidationError('User not invited!')
             return Response()
 
     @action(detail=True, methods=['delete', 'patch'])

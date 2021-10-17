@@ -1,4 +1,4 @@
-from rest_framework import serializers, status
+from rest_framework import serializers
 from pokerboard import constants
 
 from pokerboard.models import Invite, Pokerboard, PokerboardUserGroup, Ticket
@@ -7,10 +7,6 @@ from user.models import User
 from user.serializers import UserSerializer
 
 from group.models import Group
-
-from django.conf import settings
-
-import requests
 
 
 class TicketSerializer(serializers.ModelSerializer):
@@ -38,11 +34,12 @@ class PokerboardUserSerializer(serializers.Serializer):
     def validate_email(self, attrs):
         pokerboard_id = self.context['pk']
         user = User.objects.filter(email=self.context['email'])
-        pokerboard_user = PokerboardUserGroup.objects.filter(
-            pokerboard_id=pokerboard_id, user_id=user[0].id)
 
         if not user.exists():
             raise serializers.ValidationError('Invalid user!')
+            
+        pokerboard_user = PokerboardUserGroup.objects.filter(
+            pokerboard_id=pokerboard_id, user_id=user[0].id)
         if not pokerboard_user.exists():
             raise serializers.ValidationError(
                 'User not a member of pokerboard!')
