@@ -1,4 +1,3 @@
-from django.http import request
 from rest_framework import serializers
 
 from group.models import Group
@@ -26,9 +25,16 @@ class GroupSerializer(serializers.ModelSerializer):
         group.users.add(user)
         return group
         
-    def valid_name(self,attr):
-        if not attr:
-            raise serializers.ValidationError("This field cannot be blank.")
+    def validate_name(self,attrs):
+        if isinstance(attrs,list) and (not attrs[0] or not(attrs[0].strip())):
+                raise serializers.ValidationError("This field cannot be blank.")
+        elif isinstance(attrs,list):
+            return attrs[0].strip()
+        if not attrs or not(attrs.strip()): 
+                raise serializers.ValidationError("This field cannot be blank.")
+        else:
+            return attrs.strip()
+        
 
 class GroupUpdateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
@@ -46,6 +52,8 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def update(self, instance, validated_data):
+        if 'email' not in validated_data:
+            raise serializers.ValidationError("This field is required.")
         user = User.objects.get(email=validated_data['email'])
         instance.users.add(user)
         return super().update(instance, validated_data)

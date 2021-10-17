@@ -5,7 +5,6 @@ from rest_framework.response import Response
 
 from group.models import Group
 from group.serializer.serializers import GroupSerializer, GroupUpdateSerializer
-from pokerboard import serializers
 
 
 class GroupViewSet(viewsets.ModelViewSet):

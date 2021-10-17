@@ -6,14 +6,13 @@ from user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    group=GetGroupSerializer(source="group_set",many=True)
+    group=GetGroupSerializer(source="group_set",many=True,required=False)
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
                   'password', 'first_name', 'last_name','group']
         extra_kwargs = {
             'password': {'write_only': True},
-            'group': {'read_only':True}
         }
 
     def create(self, validated_data):
