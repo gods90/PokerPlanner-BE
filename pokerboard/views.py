@@ -29,7 +29,7 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         request.data['manager_id'] = request.user.id
         return super().create(request, *args, **kwargs)
 
-    @action(detail=True, methods=['post', 'patch'], permission_classes=[IsAuthenticated, CustomPermissions])
+    @action(detail=True, methods=['post', 'patch','delete'], permission_classes=[IsAuthenticated, CustomPermissions])
     def invite(self, request, pk=None):
         """
         /pokerboard/108/invite/ - manager - create invite
@@ -77,7 +77,19 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
             except Invite.DoesNotExist:
                 raise serializers.ValidationError('User not invited!')
             return Response()
-
+        
+        if request.method == 'DELETE':
+            if 'email' not in request.data.keys():
+                raise serializers.ValidationError('User email not provided!')
+            user = User.objects.get(email=request.data['email'])
+            try:
+                invite = Invite.objects.get(
+                        user_id=user.id, pokerboard_id=pokerboard_id)
+                invite.delete()
+            except Invite.DoesNotExist:
+                raise serializers.ValidationError('Invitation doesnt exists!')
+            return Response()
+                
     @action(detail=True, methods=['delete', 'patch'])
     def user(self, request, pk=None):
         """
