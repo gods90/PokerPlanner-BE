@@ -1,8 +1,8 @@
 import requests
 
-from django.conf import settings
-
 from rest_framework import serializers, status
+
+from django.conf import settings
 
 from pokerboard.models import Pokerboard, Ticket
 from user.models import User

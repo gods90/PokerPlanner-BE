@@ -1,11 +1,12 @@
-from django.urls import reverse
-
 from ddf import G
+
 from rest_framework.test import APITestCase
+from rest_framework.authtoken.models import Token
+
+from django.urls import reverse
 
 from group.models import Group
 from user.models import User
-from rest_framework.authtoken.models import Token
 
 class GroupTestCases(APITestCase):
     """
