@@ -19,15 +19,18 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
     queryset = Pokerboard.objects.all()
     serializer_class = PokerBoardCreationSerializer
     permission_classes = [IsAuthenticated]
-
+    
     def create(self, request, *args, **kwargs):
         """
-        Create new pokerboard
-        Required : Token in header, Title, Description
-        Optional : Configuration
+            Create new pokerboard
+            Required : Token in header, Title, Description
+            Optional : Configuration
         """
-        request.data['manager_id'] = request.user.id
-        return super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data={**request.data,'manager':request.user.id})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=True, methods=['post', 'patch','delete'], permission_classes=[IsAuthenticated, CustomPermissions])
     def invite(self, request, pk=None):
@@ -109,6 +112,9 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
 
         if request.method == 'DELETE':
             pokerboard_user.delete()
+            invite = Invite.objects.get(
+                        user_id=user.id, pokerboard_id=pokerboard_id)
+            invite.delete()
             return Response(status=status.HTTP_200_OK)
 
         if request.method == 'PATCH':

@@ -1,5 +1,7 @@
+from django.db.models import manager
 from rest_framework import serializers
 from pokerboard import constants
+import pokerboard
 
 from pokerboard.models import Invite, Pokerboard, PokerboardUserGroup, Ticket
 
@@ -47,28 +49,26 @@ class PokerboardUserSerializer(serializers.Serializer):
         return attrs
 
 
-class PokerBoardSerializer(serializers.ModelSerializer):
-    manager = UserSerializer()
-    ticket = TicketSerializer(source='ticket_set', many=True)
+# class PokerBoardSerializer(serializers.ModelSerializer):
+#     manager = UserSerializer()
+#     ticket = TicketSerializer(source='ticket_set', many=True)
 
-    class Meta:
-        model = Pokerboard
-        fields = ['id', 'manager', 'title', 'description',
-                  'configuration', 'status', 'ticket']
+#     class Meta:
+#         model = Pokerboard
+#         fields = ['id', 'manager', 'title', 'description',
+#                   'configuration', 'status', 'ticket']
 
 
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
-    manager_id = serializers.PrimaryKeyRelatedField(
+    manager = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all())
-    sprint_id = serializers.CharField(required=False)
-    tickets = TicketsSerializer(required=False)
 
     class Meta:
         model = Pokerboard
-        fields = ['manager_id', 'title', 'description',
-                  'configuration', 'tickets', 'sprint_id']
+        fields = ['id','manager', 'title', 'description',
+                  'configuration']
 
-
+            
 class InviteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invite
@@ -88,7 +88,7 @@ class InviteCreateSerializer(serializers.Serializer):
     def validate(self, attrs):
         pokerboard_id = self.context['pokerboard_id']
         users = []
-
+        
         if 'group_id' in attrs.keys():
             group = attrs['group_id']
             users = group.users.all()
@@ -96,11 +96,11 @@ class InviteCreateSerializer(serializers.Serializer):
             try:
                 user = User.objects.get(email=attrs['email'])
                 users.append(user)
-            except User.DoesNotExist as e:
+            except User.DoesNotExist:
                 # TODO Send mail to user
-                raise serializers.ValidationError(e)
+                raise serializers.ValidationError("User does not exist.")
         else:
-            raise serializers.ValidationError('Invalid group/email!')
+            raise serializers.ValidationError('Provide group or email field!')
 
         for user in users:
             invite = Invite.objects.filter(
