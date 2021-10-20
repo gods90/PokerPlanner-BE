@@ -32,18 +32,19 @@ class PokerboardMembersSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     role = serializers.ChoiceField(
         choices=constants.ROLE_CHOICES, required=False)
-
+    
     def validate(self, attrs):
         pokerboard_id = attrs['pokerboard_id']
         method = self.context['method']
 
+        
         if 'email' in attrs.keys():
             user = User.objects.filter(email=attrs['email'])
             if not user.exists():
                 raise serializers.ValidationError('Invalid email!')
 
             pokerboard_user = PokerboardUserGroup.objects.filter(
-                user_id=user[0].id, pokerboard_id=pokerboard_id)
+                user_id=user[0].id, pokerboard_id=pokerboard_id.id)
             if not pokerboard_user.exists():
                 raise serializers.ValidationError(
                     'User not member of pokerboard!')
@@ -53,7 +54,7 @@ class PokerboardMembersSerializer(serializers.Serializer):
                 group = attrs['group_id']
 
                 pokerboard_members = PokerboardUserGroup.objects.filter(
-                    pokerboard_id=pokerboard_id, group_id=group.id)
+                    pokerboard_id=pokerboard_id, group_id=group.id) 
                 if not pokerboard_members.exists():
                     raise serializers.ValidationError('No members found!')
 
@@ -71,12 +72,11 @@ class PokerboardMembersSerializer(serializers.Serializer):
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
     manager = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all())
-
+    
     class Meta:
         model = Pokerboard
         fields = ['id', 'manager', 'title', 'description',
                   'configuration']
-
 
             
 class InviteSerializer(serializers.ModelSerializer):
@@ -99,6 +99,7 @@ class InviteCreateSerializer(serializers.Serializer):
         pokerboard_id = self.context['pokerboard_id']
         method = self.context['method']
         users = []
+        pokerboard = Pokerboard.objects.get(id=pokerboard_id)
 
         if method in ['DELETE', 'POST']:
             if 'group_id' in attrs.keys():
@@ -109,21 +110,18 @@ class InviteCreateSerializer(serializers.Serializer):
                 try:
                     user = User.objects.get(email=attrs['email'])
                     users.append(user)
+                    if pokerboard.manager == user:
+                        raise serializers.ValidationError(
+                            'Manager cannot be invited!')
                 except User.DoesNotExist as e:
                     send_mail(to_emails=[attrs['email']])
+                    raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
             else:
                 raise serializers.ValidationError('Provide group_id/email!')
 
-            pokerboard = Pokerboard.objects.get(id=pokerboard_id)
             for user in users:
-
-                if pokerboard.manager == user:
-                    raise serializers.ValidationError(
-                        'Manager cannot be invited!')
-
                 invite = Invite.objects.filter(
                     user=user.id, pokerboard=pokerboard_id)
-
                 if method == 'POST' and invite.exists():
                     if invite[0].is_accepted:
                         raise serializers.ValidationError(
@@ -146,6 +144,6 @@ class InviteCreateSerializer(serializers.Serializer):
             if not invite.exists():
                 raise serializers.ValidationError('Invite doesnt exists')
             if invite.exists() and invite[0].is_accepted:
-                raise serializers.ValidationError('Invite already accepted!')
+                raise serializers.ValidationError('Already part of pokerboard.')
 
         return super().validate(attrs)

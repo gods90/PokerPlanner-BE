@@ -24,7 +24,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'user',
     'pokerboard',
-    'group'
+    'group',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -59,7 +60,7 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ],
+    ]
 }
 
 WSGI_APPLICATION = 'pokerplanner.wsgi.application'
