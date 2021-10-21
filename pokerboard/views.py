@@ -1,16 +1,13 @@
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from group.models import Group
 from pokerboard.models import Invite, Pokerboard, PokerboardUserGroup
 from pokerboard.permissions import CustomPermissions
 from pokerboard.serializers import InviteCreateSerializer, InviteSerializer, PokerBoardCreationSerializer, PokerboardUserGroupSerializer, PokerboardMembersSerializer
-
 from user.models import User
-
-from group.models import Group
-
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
     """
@@ -19,12 +16,12 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
     queryset = Pokerboard.objects.all()
     serializer_class = PokerBoardCreationSerializer
     permission_classes = [IsAuthenticated]
-
+    
     def create(self, request, *args, **kwargs):
         """
-        Create new pokerboard
-        Required : Token in header, Title, Description
-        Optional : Configuration
+            Create new pokerboard
+            Required : Token in header, Title, Description
+            Optional : Configuration
         """
         serializer = self.get_serializer(
             data={**request.data, 'manager': request.user.id})
@@ -69,11 +66,13 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
 
         if request.method == 'POST':
             # TODO : Send mail for signup if doesnt exist
-            for user in users:
-                serializer = InviteSerializer(
-                    data={**request.data, 'pokerboard': pokerboard_id, 'user': user.id, 'group': group_id})
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
+            pokerboard = Pokerboard.objects.get(id=pokerboard_id)
+            for user in users:  #loop to create users,bulk_create
+                if pokerboard.manager != user:
+                    serializer = InviteSerializer(
+                        data={**request.data, 'pokerboard': pokerboard_id, 'user': user.id, 'group': group_id})
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
             return Response({'msg': '{choice} successfully invited'.format(choice='Group' if group_id is not None else 'User')})
 
         if request.method == 'PATCH':
@@ -117,23 +116,26 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         pokerboard_id = self.kwargs['pk']
         serializer = PokerboardMembersSerializer(data={**request.data, 'pokerboard_id': pokerboard_id}, context={
             'method': request.method})
-        serializer.is_valid(raise_exception=True)
 
+        serializer.is_valid(raise_exception=True)
+        
         pokerboard_users = []
+        
         if 'email' in request.data.keys():
             user = User.objects.get(email=serializer.validated_data['email'])
             pokerboard_users.append(user)
         if 'group_id' in request.data.keys():
             pokerboard_users = PokerboardUserGroup.objects.filter(
                 pokerboard_id=pokerboard_id, group_id=request.data['group_id'])
-
+        
         if request.method == 'DELETE':
             for pokerboard_user in pokerboard_users:
                 invite = Invite.objects.get(
-                    user_id=pokerboard_user.user_id, pokerboard_id=pokerboard_id)
+                    user_id=pokerboard_user.id, pokerboard_id=pokerboard_id)
                 pokerboard_user.delete()
                 invite.delete()
             return Response(data={'msg': 'Successfully removed from pokerboard'}, status=status.HTTP_200_OK)
+
 
         if request.method == 'PATCH':
             pokerboard_user = PokerboardUserGroup.objects.get(
@@ -143,3 +145,17 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
             serializer = PokerboardUserGroupSerializer(
                 instance=pokerboard_user)
             return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        """
+        Shows the list of pokerboard of current manager
+        """
+        queryset = Pokerboard.objects.filter(manager=request.user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+

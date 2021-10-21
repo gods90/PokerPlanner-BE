@@ -1,16 +1,20 @@
 import re
 
+from django.contrib.auth.password_validation import validate_password
+
 from rest_framework import serializers
+from group.serializer.serializers2 import GetGroupSerializer
 from user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    group=GetGroupSerializer(source="group_set",many=True,required=False)
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
-                  'password', 'first_name', 'last_name']
+                  'password', 'first_name', 'last_name','group']
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
         }
 
     def create(self, validated_data):
@@ -44,4 +48,27 @@ class UserSerializer(serializers.ModelSerializer):
                                               "one special character!")
         return super().validate(password)
 
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Serializer for password change endpoint.
+    """
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    old_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ('old_password', 'password')
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError({"old_password": "Old password is not correct"})
+        return value
+
+    def update(self, instance, validated_data):
+    
+        instance.set_password(validated_data['password'])
+        instance.save()
+    
+        return instance
 
