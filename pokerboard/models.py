@@ -40,21 +40,24 @@ class Pokerboard(models.Model):
         return self.title
 
 
-class PokerboardUserMapping(models.Model):
+class PokerboardUserGroup(models.Model):
     """
-    Model to store mappings of pokerboards to users.
+    Model to store users/groups of pokerboard.
     """
-    ROLE_CHOICES = (constants.PLAYER, constants.MANAGER, constants.SPECTATOR)
+
     pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    user_role = models.IntegerField(
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True)
+    role = models.IntegerField(
         choices=constants.ROLE_CHOICES,
-        default=constants.ROLE_CHOICES[0],
+        default=constants.PLAYER,
         help_text='Default user role is player.',
     )
 
     def __str__(self):
-        return f'{self.pokerboard} -> {self.user}'
+        if self.user:
+            return f'{self.pokerboard} -> {self.user}'
+        return f'{self.pokerboard} -> {self.group}'
 
 
 class Ticket(models.Model):
@@ -77,7 +80,8 @@ class Ticket(models.Model):
         unique=True,
         max_length=100, help_text='Ticket ID imported from JIRA.')
     order = models.PositiveSmallIntegerField(help_text='Rank of ticket.')
-    estimation_date = models.DateField(null=True, blank=True,help_text="Date on which ticket was estimated")
+    estimation_date = models.DateField(
+        null=True, blank=True, help_text="Date on which ticket was estimated")
     status = models.IntegerField(
         choices=STATUS_CHOICES,
         default=NOTSTARTED,
@@ -86,7 +90,7 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f'{self.ticket_id} -> {self.pokerboard}'
-    
+
 
 class UserEstimate(models.Model):
     """
@@ -115,7 +119,7 @@ class Invite(models.Model):
         User, on_delete=models.CASCADE, help_text='User which is invited.')
     user_role = models.IntegerField(
         choices=constants.ROLE_CHOICES,
-        default=constants.ROLE_CHOICES[0],
+        default=constants.PLAYER,
         help_text='Default user role is player',
     )
     is_accepted = models.BooleanField(default=False)
@@ -130,3 +134,25 @@ class Invite(models.Model):
             return f'Invitee: {self.user} -> Pokerboard: {self.pokerboard}'
 
 
+class Session(models.Model):
+    """
+    Model to store sessions
+    """
+
+    ONGOING = 0
+    HASENDED = 1
+
+    STATUS_CHOICES = (
+        (ONGOING, "ongoing"),
+        (HASENDED, "hasended"),
+    )
+
+    pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE)
+    status = models.IntegerField(
+        choices=STATUS_CHOICES,
+        default=ONGOING,
+        help_text="Session ongoing or ended",
+    )
+
+    def __str__(self):
+        return
