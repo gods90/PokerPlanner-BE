@@ -1,8 +1,10 @@
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
 from group.models import Group
+from group.permissions import CustomPermissions
 from group.serializer.serializers import GroupSerializer, GroupUpdateSerializer
 
 
@@ -12,6 +14,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
+    permission_classes = [IsAuthenticated,CustomPermissions]
     
     def get_serializer_class(self, *args, **kwargs):
         method = self.request.method
