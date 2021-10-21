@@ -229,21 +229,21 @@ class InviteTestCases(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(expected_data, response.data)
         
-    # def test_invite_not_signed_user(self):
-    #     """
-    #     Invites user who has not signed.
-    #     """
-    #     data = {
-    #         "email": "tushar.gupta1@joshtechnologygroup.com"
-    #     }
-    #     response = self.client.post(self.INVITE_URL,data=data)
-    #     expected_data = {
-    #         "non_field_errors": [
-    #             "Email to signup in pokerplanner has been sent.Please check your email."
-    #         ]
-    #     }
-    #     self.assertEqual(response.status_code, 400)
-    #     self.assertDictEqual(expected_data, response.data)
+    def test_invite_not_signed_user(self):
+        """
+        Invites user who has not signed.
+        """
+        data = {
+            "email": "yogendra.manral@joshtechnologygroup.com"
+        }
+        response = self.client.post(self.INVITE_URL,data=data)
+        expected_data = {
+            "non_field_errors": [
+                "Email to signup in pokerplanner has been sent.Please check your email."
+            ]
+        }
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(expected_data, response.data)
     
     def test_invite_by_group(self):
         """
