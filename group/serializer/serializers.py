@@ -7,11 +7,12 @@ from user.serializer.serializers2 import GetUserSerializer
 
 class GroupSerializer(serializers.ModelSerializer):
     users = GetUserSerializer(many=True,required=False)
-    name = serializers.JSONField()
+    name = serializers.CharField()
     
     class Meta:
         model = Group
-        fields = ['id', 'created_by', 'name','users']
+        fields = ['id', 'created_by', 'name', 'users']
+    
         
     def create(self, validated_data):
         """
@@ -19,21 +20,10 @@ class GroupSerializer(serializers.ModelSerializer):
         """
         name = validated_data["name"]
         user = validated_data["created_by"]
-        if isinstance(name,list):
-            name = name[0]
         group = Group.objects.create(name=name,created_by=user)
         group.users.add(user)
         return group
         
-    def validate_name(self,attrs):
-        if isinstance(attrs,list) and (not attrs[0] or not(attrs[0].strip())):
-                raise serializers.ValidationError("This field cannot be blank.")
-        elif isinstance(attrs,list):
-            return attrs[0].strip()
-        if not attrs or not(attrs.strip()): 
-                raise serializers.ValidationError("This field cannot be blank.")
-        else:
-            return attrs.strip()
         
 
 class GroupUpdateSerializer(serializers.ModelSerializer):
@@ -42,7 +32,7 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ['id', 'created_by', 'name', 'email']
-
+   
     def validate_email(self, attrs):
         user = User.objects.filter(email=attrs)
         if not user.exists():
