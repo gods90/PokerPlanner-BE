@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework.authtoken.models import Token
 
-from user import models
+from user.models import User
 
 
 class CreateUserTest(APITestCase):
@@ -14,32 +14,38 @@ class CreateUserTest(APITestCase):
         """
         Setup method for creating default user.
         """
-        self.user = G(models.User,email="tv114@gmail.com")
+        self.user = G(User,email="tv114@gmail.com")
     
     def test_create_user(self):
         """
         Test create user
         """
-        user=models.User.objects.get(email="tv114@gmail.com")
+        #Deleting default user created by ddf.
+        user = User.objects.get(email="tv114@gmail.com")
         user.delete()
+        
+        #Creating new user.
         data = {
             "first_name": "Nick",
             "last_name": "Jonas",
             "email": "nick.jonas@joshtechnologygroup.com",
             "password": "Password@123",
         }
-        response = self.client.post(self.REGISTER_URL, data=data)
-        response.data.pop("id")
-        self.assertEqual(response.status_code, 201)
-        user = models.User.objects.filter(email=data["email"]).first()
-        self.assertIsNotNone(user)  
-        expected_data = {
-            "username":user.username,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email
-        }
-        self.assertDictEqual(expected_data, response.data)
+        if User.objects.count() == 0:
+            response = self.client.post(self.REGISTER_URL, data=data)   
+            #Cannot determine id so removing it from response dictionary.
+            response.data.pop("id")
+            
+            self.assertEqual(response.status_code, 201)
+            user = User.objects.filter(email=data["email"]).first()
+            self.assertIsNotNone(user)  
+            expected_data = {
+                "username":user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email
+            }
+            self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_without_first_name(self):
         """
@@ -55,33 +61,39 @@ class CreateUserTest(APITestCase):
                 "This field is required."
             ]
         }
-        response = self.client.post(self.REGISTER_URL, data=data)
-        self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(expected_data, response.data)
+        user = User.objects.get(email="tv114@gmail.com")
+        user.delete()
+        
+        if User.objects.count() == 0:
+            response = self.client.post(self.REGISTER_URL, data=data)
+            self.assertEqual(response.status_code, 400)
+            self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_without_last_name(self):
         """
         Test create user without last_name
         """
-        user=models.User.objects.get(email="tv114@gmail.com")
-        user.delete()
         data = {
             "first_name": "nick",
             "email": "nick.jonas@joshtechnologygroup.com",
             "password": "Password@123",
         }
-        response = self.client.post(self.REGISTER_URL, data=data)
-        response.data.pop("id")
-        self.assertEqual(response.status_code, 201)
-        user = models.User.objects.filter(email=data["email"]).first()
-        self.assertIsNotNone(user)
-        expected_data = {
-            "username":"",
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email
-        }
-        self.assertDictEqual(expected_data, response.data)
+        user = User.objects.get(email="tv114@gmail.com")
+        user.delete()
+        
+        if User.objects.count() == 0:
+            response = self.client.post(self.REGISTER_URL, data=data)
+            response.data.pop("id")
+            self.assertEqual(response.status_code, 201)
+            user = User.objects.filter(email=data["email"]).first()
+            self.assertIsNotNone(user)
+            expected_data = {
+                "username":"",
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email
+            }
+            self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_without_email(self):
         """
@@ -97,9 +109,13 @@ class CreateUserTest(APITestCase):
                 "This field is required."
             ]
         }
-        response = self.client.post(self.REGISTER_URL, data=data)
-        self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(expected_data, response.data)
+        user = User.objects.get(email="tv114@gmail.com")
+        user.delete()
+        
+        if User.objects.count() == 0:
+            response = self.client.post(self.REGISTER_URL, data=data)
+            self.assertEqual(response.status_code, 400)
+            self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_with_invalid_email(self):
         """
@@ -116,9 +132,13 @@ class CreateUserTest(APITestCase):
                 "Enter a valid email address."
             ]
         }
-        response = self.client.post(self.REGISTER_URL, data=data)
-        self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(expected_data, response.data)
+        user = User.objects.get(email="tv114@gmail.com")
+        user.delete()
+        
+        if User.objects.count() == 0:
+            response = self.client.post(self.REGISTER_URL, data=data)
+            self.assertEqual(response.status_code, 400)
+            self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_without_password(self):
         """
@@ -179,11 +199,12 @@ class CreateUserTest(APITestCase):
     
 class UpdateTestCases(APITestCase):
     UPDATE_URL = reverse('user')
+    
     def setUp(self):
         """
         Setup method for creating default user.
         """
-        self.user = G(models.User)
+        self.user = G(User,email="temp1@gmail.com",first_name="temp1")
         token = G(Token, user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
 
@@ -194,14 +215,15 @@ class UpdateTestCases(APITestCase):
         data = {
             "first_name": "Tushar",
         }
-        expected_data = {
-            "id": self.user.id,
-            "first_name": data['first_name'],
-            "last_name": self.user.last_name,
-            "email": self.user.email,
-            "username": self.user.username
-        }
         response = self.client.patch(self.UPDATE_URL, data=data)
+        user = User.objects.get(email=self.user.email)
+        expected_data = {
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "username": user.username
+        }
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(expected_data, response.data)
 
@@ -212,14 +234,15 @@ class UpdateTestCases(APITestCase):
         data = {
             "last_name": "Gupta",
         }
-        expected_data = {
-            "id": self.user.id,
-            "first_name": self.user.first_name,
-            "last_name": data['last_name'],
-            "email": self.user.email,
-            "username": self.user.username
-        }
         response = self.client.patch(self.UPDATE_URL, data=data)
+        user=User.objects.get(email=self.user.email)
+        expected_data = {
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "username": user.username
+        }
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(expected_data, response.data)
 
@@ -230,16 +253,10 @@ class UpdateTestCases(APITestCase):
         data = {
             "password": "Tushar@1170",
         }
-        expected_data = {
-            "id": self.user.id,
-            "first_name": self.user.first_name,
-            "last_name": self.user.last_name,
-            "email": self.user.email,
-            "username": self.user.username
-        }
         response = self.client.patch(self.UPDATE_URL, data=data)
+        user=User.objects.get(email=self.user.email)
         self.assertEqual(response.status_code, 200)
-        self.assertDictEqual(expected_data, response.data)
+        self.assertEqual(user.password,data["password"])
     
     def test_update_user_invalid_password(self):
         """
@@ -260,11 +277,12 @@ class UpdateTestCases(APITestCase):
 
 class GetTestCases(APITestCase):
     GET_URL = reverse('user')
+    
     def setUp(self):
         """
         Setup method for creating default user.
         """
-        self.user = G(models.User)
+        self.user = G(User)
         token = G(Token, user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
     
@@ -272,12 +290,13 @@ class GetTestCases(APITestCase):
         """
         Test to get user
         """
+        user = User.objects.get(email=self.user.email)
         expected_data = {
-            "id": self.user.id,
-            "first_name": self.user.first_name,
-            "last_name": self.user.last_name,
-            "email": self.user.email,
-            "username": self.user.username
+            "id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "username": user.username
         }
         response = self.client.get(self.GET_URL)
         self.assertEqual(response.status_code, 200)
@@ -286,11 +305,12 @@ class GetTestCases(APITestCase):
 
 class DeleteTestCases(APITestCase):
     DELETE_URL = reverse('user')
+    
     def setUp(self):
         """
         Setup method for creating default user.
         """
-        self.user = G(models.User)
+        self.user = G(User,email="temp1@gmail.com")
         token = G(Token, user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
     
@@ -300,6 +320,7 @@ class DeleteTestCases(APITestCase):
         """
         response = self.client.delete(self.DELETE_URL)
         self.assertEqual(response.status_code, 204)
+        self.assertEqual(len(User.objects.filter(email=self.user.email)),0)
     
     
 class LoginTestCases(APITestCase):
@@ -309,7 +330,7 @@ class LoginTestCases(APITestCase):
         """
         Setup method for creating default user.
         """
-        self.user = G(models.User,email="tv114@gmail.com",password="tushar@1170",first_name="tushar",username="tushar114")
+        self.user = G(User,email="tv114@gmail.com",password="tushar@1170",first_name="tushar",username="tushar114")
         self.user.set_password(self.user.password)
         self.user.save()
         
@@ -319,7 +340,7 @@ class LoginTestCases(APITestCase):
             "password" : "tushar@1170"
         }
         
-        user = models.User.objects.filter(email=data["username"]).first()
+        user = User.objects.filter(email=data["username"]).first()
         response = self.client.post(self.LOGIN_URL, data=data)
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(user)
