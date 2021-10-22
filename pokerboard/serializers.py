@@ -164,6 +164,7 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
             
 class InviteSerializer(serializers.ModelSerializer):
+    user_role = serializers.CharField(source='get_user_role_display')
     class Meta:
         model = Invite
         fields = '__all__'
@@ -171,6 +172,10 @@ class InviteSerializer(serializers.ModelSerializer):
             'is_accepted': {'read_only': True}
         }
 
+    def to_representation(self, instance):
+        rep = super(InviteSerializer, self).to_representation(instance)
+        rep['pokerboard'] = instance.pokerboard.title
+        return rep
 
 class InviteCreateSerializer(serializers.Serializer):
     group_id = serializers.PrimaryKeyRelatedField(
