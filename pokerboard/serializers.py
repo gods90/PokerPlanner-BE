@@ -214,17 +214,17 @@ class InviteCreateSerializer(serializers.Serializer):
                         raise serializers.ValidationError(
                             'Manager cannot be invited!')
                     if invite.exists():
-                        if invite[0].is_accepted:
+                        if invite[0].status == 1:
                             raise serializers.ValidationError(
                                 'Already part of pokerboard')
-                        else:
+                        elif invite[0].status == 0:
                             raise serializers.ValidationError(
                                 'Invite already sent!')
 
                 elif method == 'DELETE':
-                    if not invite.exists():
+                    if (not invite.exists()) or invite[0].status == 2:
                         raise serializers.ValidationError('User not invited!')
-                    elif invite.exists() and invite[0].is_accepted:
+                    elif invite.exists() and invite[0].status == 1:
                         raise serializers.ValidationError(
                             'Accepted invites cannot be revoked.')
 
@@ -235,9 +235,9 @@ class InviteCreateSerializer(serializers.Serializer):
             pokerboard = Pokerboard.objects.get(id=pokerboard_id)
             if pokerboard.manager == user:
                 raise serializers.ValidationError('Already manager!')
-            if not invite.exists():
+            if (not invite.exists()) or invite[0].status == 2:
                 raise serializers.ValidationError('Invite doesnt exists')
-            if invite.exists() and invite[0].is_accepted:
+            if invite.exists() and invite[0].status == 1:
                 raise serializers.ValidationError('Already part of pokerboard.')
 
         return super().validate(attrs)

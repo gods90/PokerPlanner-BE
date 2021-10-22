@@ -74,6 +74,7 @@ class Ticket(models.Model):
         (HASENDED, 'hasended'),
     )
 
+    # session = models.ForeignKey('Session', on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.')
     pokerboard = models.ForeignKey(
         Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.')
     ticket_id = models.CharField(
@@ -120,9 +121,10 @@ class Invite(models.Model):
     user_role = models.IntegerField(
         choices=constants.ROLE_CHOICES,
         default=constants.PLAYER,
-        help_text='Default user role is player',
+        help_text='Default user role is player.',
     )
-    is_accepted = models.BooleanField(default=False)
+    status = models.IntegerField(choices=constants.INVITE_STATUS, default=constants.PENDING, help_text='Default status of the invite.')
+    # is_accepted = models.BooleanField(default=False)
     group = models.ForeignKey(
         Group, null=True, on_delete=models.CASCADE, help_text='Group which is invited.'
     )
@@ -148,6 +150,7 @@ class Session(models.Model):
     )
 
     pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100,help_text='Title of the session.')
     status = models.IntegerField(
         choices=STATUS_CHOICES,
         default=ONGOING,
@@ -155,4 +158,4 @@ class Session(models.Model):
     )
 
     def __str__(self):
-        return
+        return f"{self.title} -> {self.pokerboard}"

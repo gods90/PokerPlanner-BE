@@ -37,4 +37,4 @@ class InviteViewSet(viewsets.GenericViewSet,mixins.ListModelMixin):
     serializer_class = InviteSerializer
 
     def get_queryset(self):
-        return Invite.objects.filter(user_id=self.request.user.id,is_accepted=False)
+        return Invite.objects.filter(user_id=self.request.user.id,status=0)
