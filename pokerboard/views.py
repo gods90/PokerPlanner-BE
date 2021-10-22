@@ -146,16 +146,16 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                 instance=pokerboard_user)
             return Response(status=status.HTTP_200_OK, data=serializer.data)
 
-    def list(self, request, *args, **kwargs):
-        """
-        Shows the list of pokerboard of current manager
-        """
-        queryset = Pokerboard.objects.filter(manager=request.user)
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+    # def list(self, request, *args, **kwargs):
+    #     """
+    #     Shows the list of pokerboard of current manager
+    #     """
+    #     queryset = Pokerboard.objects.filter(manager=request.user)
+    #     page = self.paginate_queryset(queryset)
+    #     if page is not None:
+    #         serializer = self.get_serializer(page, many=True)
+    #         return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    #     serializer = self.get_serializer(queryset, many=True)
+    #     return Response(serializer.data)
 
