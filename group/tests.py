@@ -32,26 +32,20 @@ class GroupTestCases(APITestCase):
         data = {
             'name': 'csk'
         }
-        
-        #Deleting default group created by ddf.
-        group = Group.objects.get(name = "mygroup")
-        group.delete()
-        
-        if Group.objects.count() == 0:
-            response = self.client.post(self.GROUP_URL, data=json.dumps(data),content_type="application/json")
-            group = Group.objects.get(name="csk")
-            expected_data = {
-                "id": group.id,
-                "name": group.name,
-                "created_by": group.created_by.id,
-                "users": [
-                    {
-                        "email": self.user1.email,
-                    }
-                ]
-            }
-            self.assertEqual(response.status_code, 201)
-            self.assertDictEqual(expected_data, response.data)
+        response = self.client.post(self.GROUP_URL, data=json.dumps(data),content_type="application/json")
+        group = Group.objects.get(name="csk")
+        expected_data = {
+            "id": group.id,
+            "name": group.name,
+            "created_by": group.created_by.id,
+            "users": [
+                {
+                    "email": self.user1.email,
+                }
+            ]
+        }
+        self.assertEqual(response.status_code, 201)
+        self.assertDictEqual(expected_data, response.data)
     
     def test_create_group_with_empty_name(self):
         """
@@ -65,13 +59,9 @@ class GroupTestCases(APITestCase):
                 "This field may not be blank."
             ]
         }
-        group = Group.objects.get(name = "mygroup")
-        group.delete()
-        
-        if Group.objects.count() == 0:
-            response = self.client.post(self.GROUP_URL, data=json.dumps(data),content_type="application/json")
-            self.assertEqual(response.status_code, 400)
-            self.assertDictEqual(response.data, expected_data)
+        response = self.client.post(self.GROUP_URL, data=json.dumps(data),content_type="application/json")
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(response.data, expected_data)
     
     def test_create_group_without_passing_name(self):
         """
@@ -83,13 +73,9 @@ class GroupTestCases(APITestCase):
                 "This field is required."
             ]
         }
-        group = Group.objects.get(name = "mygroup")
-        group.delete()
-        
-        if Group.objects.count() == 0:
-            response = self.client.post(self.GROUP_URL, data=data)
-            self.assertEqual(response.status_code, 400)
-            self.assertDictEqual(response.data, expected_data)
+        response = self.client.post(self.GROUP_URL, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(response.data, expected_data)
     
     def test_add_member_to_group(self):
         """
@@ -196,7 +182,6 @@ class GroupTestCases(APITestCase):
         response = self.client.patch(reverse('group-detail',args=[self.group.id]),data=data)
         self.assertEqual(response.status_code, 403)
         self.assertDictEqual(expected_data,response.data)
-
             
     def test_get_group_by_id(self):
         """
@@ -229,7 +214,6 @@ class GroupTestCases(APITestCase):
         self.assertEqual(response.status_code, 404)
         self.assertDictEqual(expected_data, response.data)
     
-    
     def test_delete_group_(self):
         """
         Test case to delete group.
@@ -249,4 +233,3 @@ class GroupTestCases(APITestCase):
         }
         self.assertEqual(response.status_code, 404)
         self.assertDictEqual(expected_data,response.data)
-

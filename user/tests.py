@@ -21,32 +21,28 @@ class CreateUserTest(APITestCase):
         """
         Test create user
         """
-        #Deleting default user created by ddf.
-        user = User.objects.get(email="tv114@gmail.com")
-        user.delete()
-        
         #Creating new user.
         data = {
+            "username":"",
             "first_name": "Nick",
             "last_name": "Jonas",
             "email": "nick.jonas@joshtechnologygroup.com",
             "password": "Password@123",
         }
-        if User.objects.count() == 0:
-            response = self.client.post(self.REGISTER_URL, data=data)   
-            #Cannot determine id so removing it from response dictionary.
-            response.data.pop("id")
-            
-            self.assertEqual(response.status_code, 201)
-            user = User.objects.filter(email=data["email"]).first()
-            self.assertIsNotNone(user)  
-            expected_data = {
-                "username":user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email
-            }
-            self.assertDictEqual(expected_data, response.data)
+        
+        response = self.client.post(self.REGISTER_URL, data=data)   
+        self.assertEqual(response.status_code, 201)
+        user = User.objects.filter(email=data["email"]).first()
+        self.assertIsNotNone(user)  
+        expected_data = {
+            "id":user.id,
+            "username":user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "group":[]
+        }
+        self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_without_first_name(self):
         """
@@ -61,14 +57,10 @@ class CreateUserTest(APITestCase):
             "first_name": [
                 "This field is required."
             ]
-        }
-        user = User.objects.get(email="tv114@gmail.com")
-        user.delete()
-        
-        if User.objects.count() == 0:
-            response = self.client.post(self.REGISTER_URL, data=data)
-            self.assertEqual(response.status_code, 400)
-            self.assertDictEqual(expected_data, response.data)
+        }        
+        response = self.client.post(self.REGISTER_URL, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_without_last_name(self):
         """
@@ -79,22 +71,19 @@ class CreateUserTest(APITestCase):
             "email": "nick.jonas@joshtechnologygroup.com",
             "password": "Password@123",
         }
-        user = User.objects.get(email="tv114@gmail.com")
-        user.delete()
-        
-        if User.objects.count() == 0:
-            response = self.client.post(self.REGISTER_URL, data=data)
-            response.data.pop("id")
-            self.assertEqual(response.status_code, 201)
-            user = User.objects.filter(email=data["email"]).first()
-            self.assertIsNotNone(user)
-            expected_data = {
-                "username":"",
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email
-            }
-            self.assertDictEqual(expected_data, response.data)
+        response = self.client.post(self.REGISTER_URL, data=data)
+        self.assertEqual(response.status_code, 201)
+        user = User.objects.filter(email=data["email"]).first()
+        self.assertIsNotNone(user)
+        expected_data = {
+            "id":user.id,
+            "username":"",
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "group":[]
+        }
+        self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_without_email(self):
         """
@@ -110,13 +99,9 @@ class CreateUserTest(APITestCase):
                 "This field is required."
             ]
         }
-        user = User.objects.get(email="tv114@gmail.com")
-        user.delete()
-        
-        if User.objects.count() == 0:
-            response = self.client.post(self.REGISTER_URL, data=data)
-            self.assertEqual(response.status_code, 400)
-            self.assertDictEqual(expected_data, response.data)
+        response = self.client.post(self.REGISTER_URL, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_with_invalid_email(self):
         """
@@ -133,13 +118,9 @@ class CreateUserTest(APITestCase):
                 "Enter a valid email address."
             ]
         }
-        user = User.objects.get(email="tv114@gmail.com")
-        user.delete()
-        
-        if User.objects.count() == 0:
-            response = self.client.post(self.REGISTER_URL, data=data)
-            self.assertEqual(response.status_code, 400)
-            self.assertDictEqual(expected_data, response.data)
+        response = self.client.post(self.REGISTER_URL, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(expected_data, response.data)
 
     def test_create_user_without_password(self):
         """
@@ -185,7 +166,7 @@ class CreateUserTest(APITestCase):
         data = {
             "first_name": "Anshul",
             "last_name": "Garg",
-            "email": "tv114@gmail.com",
+            "email": self.user.email,
             "password": "Password@123",
         }
         expected_data = {
@@ -197,7 +178,7 @@ class CreateUserTest(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(expected_data, response.data)
 
-    
+
 class UpdateTestCases(APITestCase):
     UPDATE_URL = reverse('user')
     
@@ -223,7 +204,8 @@ class UpdateTestCases(APITestCase):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
-            "username": user.username
+            "username": user.username,
+            "group":[]
         }
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(expected_data, response.data)
@@ -242,7 +224,8 @@ class UpdateTestCases(APITestCase):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
-            "username": user.username
+            "username": user.username,
+            "group":[]
         }
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(expected_data, response.data)
@@ -297,7 +280,8 @@ class GetTestCases(APITestCase):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
-            "username": user.username
+            "username": user.username,
+            "group":[]
         }
         response = self.client.get(self.GET_URL)
         self.assertEqual(response.status_code, 200)
@@ -340,7 +324,6 @@ class LoginTestCases(APITestCase):
             "username":self.user.email,
             "password" : "tushar@1170"
         }
-        
         user = User.objects.filter(email=data["username"]).first()
         response = self.client.post(self.LOGIN_URL, data=data)
         self.assertEqual(response.status_code, 200)
@@ -373,4 +356,3 @@ class LoginTestCases(APITestCase):
         }
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(expected_data, response.data)
-

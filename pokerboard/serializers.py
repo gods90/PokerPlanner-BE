@@ -174,7 +174,7 @@ class InviteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep = super(InviteSerializer, self).to_representation(instance)
-        rep['pokerboard'] = instance.pokerboard.title
+        rep['pokerboard_title'] = instance.pokerboard.title
         return rep
 
 class InviteCreateSerializer(serializers.Serializer):

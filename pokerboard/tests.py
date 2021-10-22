@@ -33,8 +33,6 @@ class PokerboardTestCases(APITestCase):
             'description':'4th time',
             "configuration":3
         }
-        pokerboard = Pokerboard.objects.get(manager=self.user)
-        pokerboard.delete()
         response = self.client.post(self.POKERBOARD_URL,data=json.dumps(data),content_type="application/json")
         
         self.assertEqual(response.status_code, 201)
@@ -55,8 +53,6 @@ class PokerboardTestCases(APITestCase):
         data = {
             "description":"4th time",
         }
-        pokerboard = Pokerboard.objects.get(manager=self.user)
-        pokerboard.delete()
         response = self.client.post(self.POKERBOARD_URL,data=json.dumps(data),content_type="application/json")
         expected_data = {
             "title": [
@@ -73,8 +69,6 @@ class PokerboardTestCases(APITestCase):
         data = {
             "title":"4th time",
         }
-        pokerboard = Pokerboard.objects.get(manager=self.user)
-        pokerboard.delete()
         response = self.client.post(self.POKERBOARD_URL,data=json.dumps(data),content_type="application/json")
         expected_data = {
             "description": [
@@ -172,25 +166,8 @@ class InviteTestCases(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(expected_data, response.data)
         
-        
-        # #Update role when role fild not provided
-        # data = {
-        #     "email":self.user2.email
-        # }
-        # response = self.client.patch("/pokerboard/{self.pokerboard.id}/members/",data=data)
-        # import pdb
-        # pdb.set_trace()
-        # expected_data = {
-        #     "non_field_errors": [
-        #         "Role not provided!"
-        #     ]
-        # }
-        # self.assertEqual(response.status_code, 400)
-        # self.assertDictEqual(expected_data, response.data)
-        
-        
         #Inviting user when invite is already accepted by post or patch request.
-        response = self.client.patch(self.INVITE_URL,data={})
+        response = self.client.patch(self.INVITE_URL,data=data)
         expected_data = {
             "non_field_errors": [
                     "Already part of pokerboard."
@@ -213,6 +190,17 @@ class InviteTestCases(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(expected_data, response.data)
         
+        # Update role when role field not provided
+        response = self.client.patch(f"/pokerboard/{self.pokerboard.id}/members/",data=json.dumps(data),
+                                     content_type="application/json")
+        expected_data = {
+            "non_field_errors": [
+                "Role not provided!"
+            ]
+        }
+        self.assertEqual(response.status_code, 400)
+        self.assertDictEqual(expected_data, response.data)
+        
     def test_invite_user_passing_manager_email(self):
         """
         Invites user by passing manager email.
@@ -229,21 +217,21 @@ class InviteTestCases(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(expected_data, response.data)
         
-    def test_invite_not_signed_user(self):
-        """
-        Invites user who has not signed.
-        """
-        data = {
-            "email": "yogendra.manral@joshtechnologygroup.com"
-        }
-        response = self.client.post(self.INVITE_URL,data=data)
-        expected_data = {
-            "non_field_errors": [
-                "Email to signup in pokerplanner has been sent.Please check your email."
-            ]
-        }
-        self.assertEqual(response.status_code, 400)
-        self.assertDictEqual(expected_data, response.data)
+    # def test_invite_not_signed_user(self):
+    #     """
+    #     Invites user who has not signed.
+    #     """
+    #     data = {
+    #         "email": "yogendra.manral@joshtechnologygroup.com"
+    #     }
+    #     response = self.client.post(self.INVITE_URL,data=data)
+    #     expected_data = {
+    #         "non_field_errors": [
+    #             "Email to signup in pokerplanner has been sent.Please check your email."
+    #         ]
+    #     }
+    #     self.assertEqual(response.status_code, 400)
+    #     self.assertDictEqual(expected_data, response.data)
     
     def test_invite_by_group(self):
         """
@@ -424,6 +412,3 @@ class UserPokerboardTestCases(APITestCase):
                 }
                 self.assertEqual(response.status_code, 200)
                 self.assertDictEqual(expected_data, response.data)
-
-        
-    
