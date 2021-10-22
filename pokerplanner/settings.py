@@ -25,7 +25,6 @@ INSTALLED_APPS = [
     'user',
     'pokerboard',
     'group',
-    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -61,8 +60,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # 'PAGE_SIZE': 10
 }
 
 WSGI_APPLICATION = 'pokerplanner.wsgi.application'
