@@ -226,6 +226,9 @@ class InviteCreateSerializer(serializers.Serializer):
             user = self.context['user']
             invite = Invite.objects.filter(
                 user_id=user.id, pokerboard_id=pokerboard_id)
+            pokerboard = Pokerboard.objects.get(id=pokerboard_id)
+            if pokerboard.manager == user:
+                raise serializers.ValidationError('Already manager!')
             if not invite.exists():
                 raise serializers.ValidationError('Invite doesnt exists')
             if invite.exists() and invite[0].is_accepted:
