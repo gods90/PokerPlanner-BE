@@ -66,13 +66,11 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
 
         if request.method == 'POST':
             # TODO : Send mail for signup if doesnt exist
-            pokerboard = Pokerboard.objects.get(id=pokerboard_id)
             for user in users:  #loop to create users,bulk_create
-                if pokerboard.manager != user:
-                    serializer = InviteSerializer(
-                        data={**request.data, 'pokerboard': pokerboard_id, 'user': user.id, 'group': group_id})
-                    serializer.is_valid(raise_exception=True)
-                    serializer.save()
+                serializer = InviteSerializer(
+                    data={**request.data, 'pokerboard': pokerboard_id, 'user': user.id, 'group': group_id})
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
             return Response({'msg': '{choice} successfully invited'.format(choice='Group' if group_id is not None else 'User')})
 
         if request.method == 'PATCH':

@@ -164,7 +164,6 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
             
 class InviteSerializer(serializers.ModelSerializer):
-    user_role = serializers.CharField(source='get_user_role_display')
     class Meta:
         model = Invite
         fields = '__all__'
@@ -174,6 +173,7 @@ class InviteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep = super(InviteSerializer, self).to_representation(instance)
+        rep['user_role'] = constants.ROLE_CHOICES[rep['user_role']][1]
         rep['pokerboard_title'] = instance.pokerboard.title
         return rep
 
@@ -200,9 +200,6 @@ class InviteCreateSerializer(serializers.Serializer):
                 try:
                     user = User.objects.get(email=attrs['email'])
                     users.append(user)
-                    if pokerboard.manager == user:
-                        raise serializers.ValidationError(
-                            'Manager cannot be invited!')
                 except User.DoesNotExist as e:
                     send_mail(to_emails=[attrs['email']])
                     raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
@@ -212,13 +209,17 @@ class InviteCreateSerializer(serializers.Serializer):
             for user in users:
                 invite = Invite.objects.filter(
                     user=user.id, pokerboard=pokerboard_id)
-                if method == 'POST' and invite.exists():
-                    if invite[0].is_accepted:
+                if method == 'POST':
+                    if pokerboard.manager == user:
                         raise serializers.ValidationError(
-                            'Already part of pokerboard')
-                    else:
-                        raise serializers.ValidationError(
-                            'Invite already sent!')
+                            'Manager cannot be invited!')
+                    if invite.exists():
+                        if invite[0].is_accepted:
+                            raise serializers.ValidationError(
+                                'Already part of pokerboard')
+                        else:
+                            raise serializers.ValidationError(
+                                'Invite already sent!')
 
                 elif method == 'DELETE':
                     if not invite.exists():
