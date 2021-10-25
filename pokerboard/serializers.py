@@ -8,10 +8,12 @@ from user.models import User
 
 from pokerplanner import settings
 
+
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
-        fields = ['pokerboard', 'ticket_id', 'order', 'estimation_date', 'status']
+        fields = ['pokerboard', 'ticket_id',
+                  'order', 'estimation_date', 'status']
 
 
 class TicketsSerializer(serializers.ListSerializer):
@@ -32,12 +34,11 @@ class PokerboardMembersSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     role = serializers.ChoiceField(
         choices=constants.ROLE_CHOICES, required=False)
-    
+
     def validate(self, attrs):
         pokerboard_id = attrs['pokerboard_id']
         method = self.context['method']
 
-        
         if 'email' in attrs.keys():
             user = User.objects.filter(email=attrs['email'])
             if not user.exists():
@@ -54,7 +55,7 @@ class PokerboardMembersSerializer(serializers.Serializer):
                 group = attrs['group_id']
 
                 pokerboard_members = PokerboardUserGroup.objects.filter(
-                    pokerboard_id=pokerboard_id, group_id=group.id) 
+                    pokerboard_id=pokerboard_id, group_id=group.id)
                 if not pokerboard_members.exists():
                     raise serializers.ValidationError('No members found!')
 
@@ -72,22 +73,22 @@ class PokerboardMembersSerializer(serializers.Serializer):
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
     manager = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all())
-    
+
     # manager_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     # sprint_id = serializers.CharField(required=False,write_only=True)
     # tickets = TicketsSerializer(required=False,write_only=True)
     # jql = serializers.CharField(required=False,write_only=True)
     # ticket_responses = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Pokerboard
         fields = ['id', 'manager', 'title', 'description',
                   'configuration']
-    
+
     # class Meta:
     #     model = Pokerboard
     #     fields = ['manager_id', 'title', 'description','configuration', 'tickets', 'sprint_id', 'ticket_responses', 'jql']
-    
+
     # def get_ticket_responses(self, instance):
     #     jira = settings.JIRA
     #     data = dict(instance)
@@ -116,7 +117,7 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
     #         if(len(myJql) != 0):
     #             myJql+=" OR "
     #         myJql += data['jql']
-            
+
     #     jql=myJql
     #     try:
     #         issues = jira.jql(jql)['issues']
@@ -162,9 +163,8 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
     #         count += 1
     #     return pokerboard
 
-            
+
 class InviteSerializer(serializers.ModelSerializer):
-    user_role = serializers.CharField(source='get_user_role_display')
     class Meta:
         model = Invite
         fields = '__all__'
@@ -174,8 +174,10 @@ class InviteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep = super(InviteSerializer, self).to_representation(instance)
-        rep['pokerboard'] = instance.pokerboard.title
+        rep['user_role'] = constants.ROLE_CHOICES[rep['user_role']][1]
+        rep['pokerboard_title'] = instance.pokerboard.title
         return rep
+
 
 class InviteCreateSerializer(serializers.Serializer):
     group_id = serializers.PrimaryKeyRelatedField(
@@ -183,7 +185,6 @@ class InviteCreateSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     user_role = serializers.ChoiceField(
         choices=constants.ROLE_CHOICES, required=False)
-    
 
     def validate(self, attrs):
         pokerboard_id = self.context['pokerboard_id']
@@ -200,25 +201,27 @@ class InviteCreateSerializer(serializers.Serializer):
                 try:
                     user = User.objects.get(email=attrs['email'])
                     users.append(user)
-                    if pokerboard.manager == user:
-                        raise serializers.ValidationError(
-                            'Manager cannot be invited!')
                 except User.DoesNotExist as e:
                     send_mail(to_emails=[attrs['email']])
-                    raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
+                    raise serializers.ValidationError(
+                        "Email to signup in pokerplanner has been sent.Please check your email.")
             else:
                 raise serializers.ValidationError('Provide group_id/email!')
 
             for user in users:
                 invite = Invite.objects.filter(
                     user=user.id, pokerboard=pokerboard_id)
-                if method == 'POST' and invite.exists():
-                    if invite[0].is_accepted:
+                if method == 'POST':
+                    if pokerboard.manager == user:
                         raise serializers.ValidationError(
-                            'Already part of pokerboard')
-                    else:
-                        raise serializers.ValidationError(
-                            'Invite already sent!')
+                            'Manager cannot be invited!')
+                    if invite.exists():
+                        if invite[0].is_accepted:
+                            raise serializers.ValidationError(
+                                'Already part of pokerboard')
+                        else:
+                            raise serializers.ValidationError(
+                                'Invite already sent!')
 
                 elif method == 'DELETE':
                     if not invite.exists():
@@ -237,7 +240,7 @@ class InviteCreateSerializer(serializers.Serializer):
             if not invite.exists():
                 raise serializers.ValidationError('Invite doesnt exists')
             if invite.exists() and invite[0].is_accepted:
-                raise serializers.ValidationError('Already part of pokerboard.')
+                raise serializers.ValidationError(
+                    'Already part of pokerboard.')
 
         return super().validate(attrs)
-

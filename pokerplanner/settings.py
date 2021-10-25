@@ -60,8 +60,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    # 'PAGE_SIZE': 10
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
 }
 
 WSGI_APPLICATION = 'pokerplanner.wsgi.application'
@@ -109,7 +109,7 @@ AUTH_USER_MODEL = "user.User"
 CORS_ALLOW_ALL_ORIGINS = True
 
 JIRA = Jira(
-    url = os.environ['JIRA_URL'],
-    username = os.environ['JIRA_USERNAME'],
-    password = os.environ['JIRA_PASSWORD']
+    url=os.environ['JIRA_URL'],
+    username=os.environ['JIRA_USERNAME'],
+    password=os.environ['JIRA_PASSWORD']
 )
