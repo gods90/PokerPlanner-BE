@@ -2,8 +2,7 @@ from rest_framework import serializers
 
 from group.models import Group
 from pokerboard import constants
-from pokerboard.models import Invite, Pokerboard, PokerboardUserGroup
-from pokerboard.email_send import send_mail
+from pokerboard.models import Pokerboard, PokerboardUserGroup
 from user.models import User
 
 
@@ -68,82 +67,5 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
                   'configuration']
 
            
-class InviteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Invite
-        fields = '__all__'
-        extra_kwargs = {
-            'is_accepted': {'read_only': True}
-        }
-
-    def to_representation(self, instance):
-        rep = super(InviteSerializer, self).to_representation(instance)
-        rep['user_role'] = constants.ROLE_CHOICES[rep['user_role']][1]
-        rep['pokerboard_title'] = instance.pokerboard.title
-        return rep
 
 
-class InviteCreateSerializer(serializers.Serializer):
-    group_id = serializers.PrimaryKeyRelatedField(
-        queryset=Group.objects.all(), required=False)
-    email = serializers.EmailField(required=False)
-    user_role = serializers.ChoiceField(
-        choices=constants.ROLE_CHOICES, required=False)
-    
-
-    def validate(self, attrs):
-        pokerboard_id = self.context['pokerboard_id']
-        method = self.context['method']
-        users = []
-        pokerboard = Pokerboard.objects.get(id=pokerboard_id)
-
-        if method in ['DELETE', 'POST']:
-            if 'group_id' in attrs.keys():
-                group = attrs['group_id']
-                users = group.users.all()
-
-            elif 'email' in attrs.keys():
-                try:
-                    user = User.objects.get(email=attrs['email'])
-                    users.append(user)
-                except User.DoesNotExist as e:
-                    send_mail(to_emails=[attrs['email']])
-                    raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
-            else:
-                raise serializers.ValidationError('Provide group_id/email!')
-
-            for user in users:
-                invite = Invite.objects.filter(
-                    user=user.id, pokerboard=pokerboard_id)
-                if method == 'POST':
-                    if pokerboard.manager == user:
-                        raise serializers.ValidationError(
-                            'Manager cannot be invited!')
-                    if invite.exists():
-                        if invite[0].status == constants.ACCEPTED:
-                            raise serializers.ValidationError(
-                                'Already part of pokerboard')
-                        elif invite[0].status == constants.PENDING:
-                            raise serializers.ValidationError(
-                                'Invite already sent!')
-
-                elif method == 'DELETE':
-                    if (not invite.exists()) or invite[0].status == constants.DECLINED:
-                        raise serializers.ValidationError('User not invited!')
-                    elif invite.exists() and invite[0].status == constants.ACCEPTED:
-                        raise serializers.ValidationError(
-                            'Accepted invites cannot be revoked.')
-
-        elif method in ['PATCH']:
-            user = self.context['user']
-            invite = Invite.objects.filter(
-                user_id=user.id, pokerboard_id=pokerboard_id)
-            pokerboard = Pokerboard.objects.get(id=pokerboard_id)
-            if (not invite.exists()) or invite[0].status == constants.DECLINED:
-                raise serializers.ValidationError('Invite doesnt exists')
-            if pokerboard.manager == user:
-                raise serializers.ValidationError('Already manager!')
-            if invite.exists() and invite[0].status == constants.ACCEPTED:
-                raise serializers.ValidationError('Already part of pokerboard.')
-
-        return super().validate(attrs)

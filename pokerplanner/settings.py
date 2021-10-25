@@ -25,7 +25,8 @@ INSTALLED_APPS = [
     'user',
     'pokerboard',
     'group',
-    'session'
+    'session',
+    'invite'
 ]
 
 MIDDLEWARE = [
