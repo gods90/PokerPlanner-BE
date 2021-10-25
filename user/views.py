@@ -33,7 +33,7 @@ class InviteViewSet(viewsets.GenericViewSet,mixins.ListModelMixin):
     View to get user invites
     """
     queryset = Invite.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated)
     serializer_class = InviteSerializer
 
     def get_queryset(self):

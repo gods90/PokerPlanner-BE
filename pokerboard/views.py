@@ -4,10 +4,12 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from group.models import Group
+from pokerboard import constants
 from pokerboard.models import Invite, Pokerboard, PokerboardUserGroup
 from pokerboard.permissions import CustomPermissions
 from pokerboard.serializers import InviteCreateSerializer, InviteSerializer, PokerBoardCreationSerializer, PokerboardUserGroupSerializer, PokerboardMembersSerializer
 from user.models import User
+
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
     """
@@ -66,10 +68,11 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
 
         if request.method == 'POST':
             # TODO : Send mail for signup if doesnt exist
-            for user in users:  #loop to create users,bulk_create
+            for user in users:  
                 try:
                     invite = Invite.objects.get(user=user.id,pokerboard=pokerboard_id)
-                    invite.status = 0
+                    invite.status = constants.PENDING
+                    invite.save()
                 except:
                     serializer = InviteSerializer(
                         data={**request.data, 'pokerboard': pokerboard_id, 'user': user.id, 'group': group_id})
@@ -95,7 +98,7 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                 data=pokerboard_user_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            invite.status = 1
+            invite.status = constants.ACCEPTED
             invite.save()
 
             return Response(data={'msg': 'Welcome to the pokerboard!'})
@@ -104,7 +107,8 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
             for user in users:
                 invite = Invite.objects.get(
                     user_id=user.id, pokerboard_id=pokerboard_id)
-                invite.status = 2
+                invite.status = constants.DECLINED
+                invite.save()
             return Response(data={'msg': 'Invite successfully revoked.'})
 
     @action(detail=True, methods=['delete', 'patch'], permission_classes=[IsAuthenticated, CustomPermissions])
@@ -148,16 +152,5 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                 instance=pokerboard_user)
             return Response(status=status.HTTP_200_OK, data=serializer.data)
 
-    def list(self, request, *args, **kwargs):
-        """
-        Shows the list of pokerboard of current manager
-        """
-        queryset = Pokerboard.objects.filter(manager=request.user)
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
+    def get_queryset(self):
+        return Pokerboard.objects.filter(manager=self.request.user)

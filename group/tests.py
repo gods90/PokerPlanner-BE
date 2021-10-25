@@ -1,3 +1,4 @@
+from typing import OrderedDict
 from ddf import G
 import json
 
@@ -92,23 +93,30 @@ class GroupTestCases(APITestCase):
         response = self.client.get(self.GROUP_URL)
         group = Group.objects.get(name=self.group.name)
         user1 = User.objects.get(id=group.created_by_id)
-        expected_data = [
-            {
-                "id": group.id,
-                "name": group.name,
-                "created_by": group.created_by.id,
-                "users": [
-                    {
-                        "email": user1.email
-                    },
-                    {
-                        "email":user2.email
-                    }
-                ]
-            }
-        ]
+        expected_data ={
+            "count":1,
+            "next":None,
+            "previous":None
+        }
+        
+        results ={
+            "id": group.id,
+            "created_by": group.created_by.id,
+            "name": group.name,
+        }
+
+        users=[]
+        users.append(OrderedDict({'email': 'temp1@gmail.com'}))
+        users.append(OrderedDict({'email': 'temp2@gmail.com'}))
+                
+        results['users'] = users
+        expected_data = OrderedDict(expected_data)
+        results = [OrderedDict(results)]
+        expected_data['results'] = results
+
+
         self.assertEqual(response.status_code, 200)
-        self.assertListEqual(expected_data, response.data)
+        self.assertEqual(expected_data, response.data)
         
 
         #Expects 400 response code on adding a member more than one time

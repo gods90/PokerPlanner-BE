@@ -12,6 +12,7 @@ urlpatterns = [
     path('pokerboard/', include('pokerboard.urls')),
     path('group/', include('group.urls')),
     path('login/', ObtainAuthToken.as_view(), name='login'),
-    path('api/docs/', schema_view)
+    path('api/docs/', schema_view),
+    path('session/',include('session.urls'))
 ]
 

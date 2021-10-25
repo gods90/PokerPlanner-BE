@@ -109,12 +109,10 @@ class InviteTestCases(APITestCase):
         self.pokerboard = G(Pokerboard,manager=self.user1)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
         
-        self.group1 = G(Group, created_by=self.user1,name = "mygroup")
-        self.group1.users.add(self.user1)
-        self.group1.users.add(self.user2)
+        self.group1 = G(Group, created_by=self.user3,name = "mygroup")
+        self.group1.users.add(self.user3)
         
-        self.group2 = G(Group, created_by=self.user1,name = "mygroup")
-        self.group2.users.add(self.user1)
+        self.group2 = G(Group, created_by=self.user2,name = "mygroup")
         self.group2.users.add(self.user2)
         self.group2.users.add(self.user3)
         self.INVITE_URL = f"/pokerboard/{self.pokerboard.id}/invite/"
@@ -238,18 +236,18 @@ class InviteTestCases(APITestCase):
         Invite by group id.
         """
         data = {
-            "group_id": self.group1.id
+            "group_id": self.group2.id
         }
         response = self.client.post(self.INVITE_URL,data=data)
         expected_data = {
             "msg": "Group successfully invited"
         }
-        self.assertEqual(response.status_code, 200)
         self.assertDictEqual(expected_data, response.data)
+        self.assertEqual(response.status_code, 200)
     
         # Sending invite if one person is in 2 group.
         data = {
-            "group_id": self.group2.id
+            "group_id": self.group1.id
         }
         response = self.client.post(self.INVITE_URL,data=data)
         expected_data = {
@@ -257,8 +255,8 @@ class InviteTestCases(APITestCase):
                 "Invite already sent!"
             ]
         }
-        self.assertEqual(response.status_code, 400)
         self.assertDictEqual(expected_data, response.data)
+        self.assertEqual(response.status_code, 400)
         
     def test_invite_without_passing_email_or_groupid(self):
         """
