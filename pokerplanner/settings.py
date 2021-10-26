@@ -111,7 +111,7 @@ AUTH_USER_MODEL = "user.User"
 CORS_ALLOW_ALL_ORIGINS = True
 
 JIRA = Jira(
-    url = os.environ['JIRA_URL'],
-    username = os.environ['JIRA_USERNAME'],
-    password = os.environ['JIRA_PASSWORD']
+    url=os.environ['JIRA_URL'],
+    username=os.environ['JIRA_USERNAME'],
+    password=os.environ['JIRA_PASSWORD']
 )

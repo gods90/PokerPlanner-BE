@@ -20,12 +20,11 @@ class PokerboardMembersSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     role = serializers.ChoiceField(
         choices=constants.ROLE_CHOICES, required=False)
-    
+
     def validate(self, attrs):
         pokerboard_id = attrs['pokerboard_id']
         method = self.context['method']
 
-        
         if 'email' in attrs.keys():
             user = User.objects.filter(email=attrs['email'])
             if not user.exists():
@@ -42,7 +41,7 @@ class PokerboardMembersSerializer(serializers.Serializer):
                 group = attrs['group_id']
 
                 pokerboard_members = PokerboardUserGroup.objects.filter(
-                    pokerboard_id=pokerboard_id, group_id=group.id) 
+                    pokerboard_id=pokerboard_id, group_id=group.id)
                 if not pokerboard_members.exists():
                     raise serializers.ValidationError('No members found!')
 

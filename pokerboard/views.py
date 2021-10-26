@@ -17,7 +17,7 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
     queryset = Pokerboard.objects.all()
     serializer_class = PokerBoardCreationSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def create(self, request, *args, **kwargs):
         """
             Create new pokerboard
@@ -45,16 +45,16 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
             'method': request.method})
 
         serializer.is_valid(raise_exception=True)
-        
+
         pokerboard_users = []
-        
+
         if 'email' in request.data.keys():
             user = User.objects.get(email=serializer.validated_data['email'])
             pokerboard_users.append(user)
         if 'group_id' in request.data.keys():
             pokerboard_users = PokerboardUserGroup.objects.filter(
                 pokerboard_id=pokerboard_id, group_id=request.data['group_id'])
-        
+
         if request.method == 'DELETE':
             for pokerboard_user in pokerboard_users:
                 invite = Invite.objects.get(
@@ -62,7 +62,6 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
                 pokerboard_user.delete()
                 invite.delete()
             return Response(data={'msg': 'Successfully removed from pokerboard'}, status=status.HTTP_200_OK)
-
 
         if request.method == 'PATCH':
             pokerboard_user = PokerboardUserGroup.objects.get(

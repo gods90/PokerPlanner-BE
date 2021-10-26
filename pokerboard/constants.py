@@ -15,5 +15,3 @@ INVITE_STATUS = (
     (ACCEPTED, 'ACCEPTED'),
     (DECLINED, 'DECLINED')
 )
-
-

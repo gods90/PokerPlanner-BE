@@ -23,6 +23,11 @@ class UserSerializer(serializers.ModelSerializer):
         serializer = GetGroupSerializer(res, many=True)
         return serializer.data
 
+    def get_groups(self, user):
+        res = Group.objects.filter(users__in=[user])
+        serializer = GetGroupSerializer(res, many=True)
+        return serializer.data
+
     def create(self, validated_data):
         """
         Overriding create method to hash password and then save.
@@ -54,11 +59,13 @@ class UserSerializer(serializers.ModelSerializer):
                                               "one special character!")
         return super().validate(password)
 
+
 class ChangePasswordSerializer(serializers.Serializer):
     """
     Serializer for password change endpoint.
     """
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password])
     old_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
@@ -68,13 +75,13 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate_old_password(self, value):
         user = self.context['request'].user
         if not user.check_password(value):
-            raise serializers.ValidationError({"old_password": "Old password is not correct"})
+            raise serializers.ValidationError(
+                {"old_password": "Old password is not correct"})
         return value
 
     def update(self, instance, validated_data):
-    
+
         instance.set_password(validated_data['password'])
         instance.save()
-    
-        return instance
 
+        return instance
