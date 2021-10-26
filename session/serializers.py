@@ -92,6 +92,7 @@ class SessionCreateSerializer(serializers.ModelSerializer):
         return ticket_responses
 
     def create(self, validated_data):
+        print(validated_data)
         count = 0
         new_session = {key: val for key, val in self.data.items() if key not in [
             'sprint_id', 'tickets', 'jql']}
