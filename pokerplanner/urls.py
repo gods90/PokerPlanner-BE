@@ -1,6 +1,5 @@
 from django.contrib import admin
-from django.urls import path, include
-
+from django.urls import include, path
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework_swagger.views import get_swagger_view
 

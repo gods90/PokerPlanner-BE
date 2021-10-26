@@ -1,6 +1,7 @@
 import os
-from dotenv import load_dotenv
+
 from atlassian import Jira
+from dotenv import load_dotenv
 
 DEBUG = True
 
@@ -26,7 +27,9 @@ INSTALLED_APPS = [
     'pokerboard',
     'group',
     'session',
-    'invite'
+    'invite',
+    'common',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [

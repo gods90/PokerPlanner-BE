@@ -1,11 +1,10 @@
-from typing import OrderedDict
-from ddf import G
 import json
+from typing import OrderedDict
 
-from rest_framework.test import APITestCase
-from rest_framework.authtoken.models import Token
-
+from ddf import G
 from django.urls import reverse
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APITestCase
 
 from group.models import Group
 from user.models import User

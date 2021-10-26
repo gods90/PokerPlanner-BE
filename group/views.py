@@ -1,13 +1,14 @@
-from rest_framework import viewsets
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from user.models import User
 from group.models import Group
 from group.permissions import CustomPermissions
-from group.serializer.serializers import GroupDeleteSerializer, GroupSerializer, GroupUpdateSerializer
+from group.serializer.serializers import (GroupDeleteSerializer,
+                                          GroupSerializer,
+                                          GroupUpdateSerializer)
+from user.models import User
 
 
 class GroupViewSet(viewsets.ModelViewSet):

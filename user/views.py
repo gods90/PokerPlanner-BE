@@ -2,7 +2,8 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from user.models import User
-from user.serializer.serializers import UserSerializer, ChangePasswordSerializer
+from user.serializer.serializers import (ChangePasswordSerializer,
+                                         UserSerializer)
 
 
 class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView):

@@ -1,14 +1,12 @@
 from rest_framework import serializers
 
-from invite.models import Invite
+from group.models import Group
 from invite.email_send import send_mail
-
+from invite.models import Invite
 from pokerboard import constants
 from pokerboard.models import Pokerboard
-
-from group.models import Group
-
 from user.models import User
+
 
 class InviteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -95,10 +93,3 @@ class InviteCreateSerializer(serializers.Serializer):
                 invite = Invite.objects.create(**new_data)
         return invite
 
-        
-
-
-
-
-    
-    

@@ -1,12 +1,10 @@
 from django.shortcuts import render
-
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
 
 from session.models import Session
-from session.serializers import SessionSerializer, SessionCreateSerializer
+from session.serializers import SessionSerializer
 
 
 class SessionViewSet(viewsets.ModelViewSet):
@@ -16,13 +14,6 @@ class SessionViewSet(viewsets.ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
     permission_classes = [IsAuthenticated]
-
-    def get_serializer(self, *args, **kwargs):
-        # import pdb
-        # pdb.set_trace()
-        if(self.request.method == 'POST'):
-            return SessionCreateSerializer
-        return super().get_serializer(*args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         """

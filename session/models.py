@@ -1,10 +1,10 @@
 from django.db import models
 
-from pokerboard.models import Pokerboard
+from pokerboard.models import Pokerboard, Ticket
 from user.models import User
+from common.models import Timestamp
 
-
-class Session(models.Model):
+class Session(Timestamp):
     """
     Model to store sessions
     """
@@ -24,43 +24,13 @@ class Session(models.Model):
         default=ONGOING,
         help_text="Session ongoing or ended",
     )
+    time_started_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.title} -> {self.pokerboard}"
 
 
-class Ticket(models.Model):
-    """
-    Model to store ticket detail
-    """
-    NOTSTARTED = 0
-    ONGOING = 0
-    HASENDED = 1
-
-    STATUS_CHOICES = (
-        (NOTSTARTED, 'notstarted'),
-        (ONGOING, 'ongoing'),
-        (HASENDED, 'hasended'),
-    )
-
-    session = models.ForeignKey('Session', on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.')
-    ticket_id = models.CharField(
-        unique=True,
-        max_length=100, help_text='Ticket ID imported from JIRA.')
-    order = models.PositiveSmallIntegerField(help_text='Rank of ticket.')
-    estimation_date = models.DateField(
-        null=True, blank=True, help_text="Date on which ticket was estimated")
-    status = models.IntegerField(
-        choices=STATUS_CHOICES,
-        default=NOTSTARTED,
-        help_text='Default ticket status is not started.',
-    )
-
-    def __str__(self):
-        return f'{self.ticket_id} -> {self.pokerboard}'
-
-
-class UserEstimate(models.Model):
+class UserEstimate(Timestamp):
     """
     Model to store user estimates
     """

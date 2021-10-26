@@ -1,8 +1,8 @@
 import re
 
 from django.contrib.auth.password_validation import validate_password
-
 from rest_framework import serializers
+
 from group.models import Group
 from group.serializer.serializers2 import GetGroupSerializer
 from user.models import User

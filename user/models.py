@@ -1,16 +1,21 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-class User(AbstractUser):
+from common.models import Timestamp
+
+class User(AbstractUser, Timestamp):
     """
     A custom user model to store details about a user.
     """
     email = models.EmailField(
-        unique=True, max_length=50, help_text='Email should be valid email address')
+        unique=True, max_length=50, help_text='Email should be valid email address'
+    )
     first_name = models.CharField(
-        blank=False, max_length=50, help_text='First Name of User')
+        blank=False, max_length=50, help_text='First Name of User'
+    )
     username = models.CharField(
-        blank=True, max_length=50, help_text='Username of User')
+        blank=True, max_length=50, help_text='Username of User'
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

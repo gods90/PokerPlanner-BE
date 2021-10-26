@@ -1,9 +1,10 @@
 from django.db import models
 
+from common.models import Timestamp
 from user.models import User
 
 
-class Group(models.Model):
+class Group(Timestamp):
     """ Model to store a group of users participating in poker planning."""
     name = models.CharField(max_length=250, help_text='Name of the group')
     users = models.ManyToManyField(
