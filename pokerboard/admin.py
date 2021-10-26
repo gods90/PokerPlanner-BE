@@ -1,10 +1,12 @@
 from django.contrib import admin
 
-from pokerboard.models import Pokerboard, PokerboardUserGroup, Session, UserEstimate, Invite, Ticket
+from pokerboard.models import Pokerboard, PokerboardUserGroup
 
-admin.site.register(Pokerboard)
-admin.site.register(PokerboardUserGroup)
-admin.site.register(Ticket)
-admin.site.register(UserEstimate)
-admin.site.register(Invite)
-admin.site.register(Session)
+@admin.register(Pokerboard)
+class PokerboardAdmin(admin.ModelAdmin):
+    list_display = ['id', 'title', 'manager']
+
+@admin.register(PokerboardUserGroup)
+class PokerboardUserGroupAdmin(admin.ModelAdmin):
+    list_display = ['id', 'pokerboard', 'user', 'group', 'role']
+

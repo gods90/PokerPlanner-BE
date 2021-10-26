@@ -10,14 +10,18 @@ from user.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     groups = serializers.SerializerMethodField()
-
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
-                  'password', 'first_name', 'last_name', 'groups']
+                  'password', 'first_name', 'last_name','groups']
         extra_kwargs = {
             'password': {'write_only': True},
         }
+    
+    def get_groups(self, user):
+        res = Group.objects.filter(users__in=[user])
+        serializer = GetGroupSerializer(res, many=True)
+        return serializer.data
 
     def get_groups(self, user):
         res = Group.objects.filter(users__in=[user])

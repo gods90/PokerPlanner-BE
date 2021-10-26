@@ -10,7 +10,4 @@ class CustomPermissions(BasePermission):
         pokerboard = Pokerboard.objects.get(id=pokerboard_id)
         if view.action == 'members':
             return request.user == pokerboard.manager
-        # only manager can create/delete
-        elif view.action == 'invite' and request.method not in ['PATCH']:
-            return request.user == pokerboard.manager
         return super().has_permission(request, view)

@@ -21,26 +21,26 @@ class CreateUserTest(APITestCase):
         """
         Test create user
         """
-        # Creating new user.
+        #Creating new user.
         data = {
-            "username": "",
+            "username":"",
             "first_name": "Nick",
             "last_name": "Jonas",
             "email": "nick.jonas@joshtechnologygroup.com",
             "password": "Password@123",
         }
-
-        response = self.client.post(self.REGISTER_URL, data=data)
+        
+        response = self.client.post(self.REGISTER_URL, data=data)   
         self.assertEqual(response.status_code, 201)
         user = User.objects.filter(email=data["email"]).first()
         self.assertIsNotNone(user)
         expected_data = {
-            "id": user.id,
-            "username": user.username,
+            "id":user.id,
+            "username":user.username,
+            "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "email": user.email,
-            "group": []
+            "groups":[]
         }
         self.assertDictEqual(expected_data, response.data)
 
@@ -76,12 +76,12 @@ class CreateUserTest(APITestCase):
         user = User.objects.filter(email=data["email"]).first()
         self.assertIsNotNone(user)
         expected_data = {
-            "id": user.id,
-            "username": "",
+            "id":user.id,
+            "username":"",
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
-            "group": []
+            "groups":[]
         }
         self.assertDictEqual(expected_data, response.data)
 
@@ -205,7 +205,7 @@ class UpdateTestCases(APITestCase):
             "last_name": user.last_name,
             "email": user.email,
             "username": user.username,
-            "group": []
+            "groups":[]
         }
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(expected_data, response.data)
@@ -225,7 +225,7 @@ class UpdateTestCases(APITestCase):
             "last_name": user.last_name,
             "email": user.email,
             "username": user.username,
-            "group": []
+            "groups":[]
         }
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(expected_data, response.data)
@@ -281,7 +281,7 @@ class GetTestCases(APITestCase):
             "last_name": user.last_name,
             "email": user.email,
             "username": user.username,
-            "group": []
+            "groups":[]
         }
         response = self.client.get(self.GET_URL)
         self.assertEqual(response.status_code, 200)

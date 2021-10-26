@@ -2,10 +2,10 @@ from rest_framework.routers import DefaultRouter
 
 from django.urls import path, include
 
-from pokerboard.views import PokerBoardViewSet
+from invite.views import InviteViewSet
 
 router = DefaultRouter()
-router.register('', PokerBoardViewSet,basename="pokerboard")
+router.register('', InviteViewSet)
 
 urlpatterns = [
     path("", include(router.urls))
