@@ -32,8 +32,9 @@ class GroupTestCases(APITestCase):
         data = {
             'name': 'csk'
         }
-        response = self.client.post(self.GROUP_URL, data=json.dumps(
-            data), content_type="application/json")
+        response = self.client.post(self.GROUP_URL, data=json.dumps(data),
+            content_type="application/json"
+        )
         group = Group.objects.get(name="csk")
         expected_data = {
             "id": group.id,
@@ -64,8 +65,9 @@ class GroupTestCases(APITestCase):
                 "This field may not be blank."
             ]
         }
-        response = self.client.post(self.GROUP_URL, data=json.dumps(
-            data), content_type="application/json")
+        response = self.client.post(self.GROUP_URL, data=json.dumps(data), 
+            content_type="application/json"
+        )
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(response.data, expected_data)
 
@@ -92,7 +94,8 @@ class GroupTestCases(APITestCase):
             "email": user2.email
         }
         response = self.client.patch(
-            reverse('group-detail', args=[self.group.id]), data=data)
+            reverse('group-detail', args=[self.group.id]), data=data
+        )
         self.assertEqual(response.status_code, 200)
 
         # Get group list.Here users will be creator of group and the above added user.
@@ -143,7 +146,8 @@ class GroupTestCases(APITestCase):
             ]
         }
         response = self.client.patch(
-            reverse('group-detail', args=[self.group.id]), data=data)
+            reverse('group-detail', args=[self.group.id]), data=data
+        )
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(response.data, expected_data)
 
@@ -160,7 +164,8 @@ class GroupTestCases(APITestCase):
             ]
         }
         response = self.client.patch(
-            reverse('group-detail', args=[self.group.id]), data=data)
+            reverse('group-detail', args=[self.group.id]), data=data
+        )
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(response.data, expected_data)
 
@@ -175,7 +180,8 @@ class GroupTestCases(APITestCase):
             "detail": "Not found."
         }
         response = self.client.patch(
-            reverse('group-detail', args=[500]), data=data)
+            reverse('group-detail', args=[500]), data=data
+        )
         self.assertEqual(response.status_code, 404)
         self.assertDictEqual(response.data, expected_data)
 
@@ -187,7 +193,8 @@ class GroupTestCases(APITestCase):
             "This field is required."
         ]
         response = self.client.patch(
-            reverse('group-detail', args=[self.group.id]))
+            reverse('group-detail', args=[self.group.id])
+        )
         self.assertEqual(response.status_code, 400)
         self.assertListEqual(response.data, expected_data)
 
@@ -205,7 +212,8 @@ class GroupTestCases(APITestCase):
         token2 = G(Token, user=user2)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token2.key)
         response = self.client.patch(
-            reverse('group-detail', args=[self.group.id]), data=data)
+            reverse('group-detail', args=[self.group.id]), data=data
+        )
         self.assertEqual(response.status_code, 403)
         self.assertDictEqual(expected_data, response.data)
 
@@ -214,7 +222,8 @@ class GroupTestCases(APITestCase):
         Get group detail by giving its id.
         """
         response = self.client.get(
-            reverse('group-detail', args=[self.group.id]))
+            reverse('group-detail', args=[self.group.id])
+        )
         group = Group.objects.get(name=self.group.name)
         user = User.objects.get(id=group.created_by_id)
         expected_data = {
@@ -250,7 +259,8 @@ class GroupTestCases(APITestCase):
         Test case to delete group.
         """
         response = self.client.delete(
-            reverse('group-detail', args=[self.group.id]))
+            reverse('group-detail', args=[self.group.id])
+        )
         self.assertEqual(response.status_code, 204)
         # 0 groups exist after deletion
         self.assertEqual(len(Group.objects.filter(id=self.group.id)), 0)

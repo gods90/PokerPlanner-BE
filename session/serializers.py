@@ -22,8 +22,11 @@ class SessionSerializer(serializers.ModelSerializer):
         return repr
     
     def validate_pokerboard(self, attrs):
+        """
+        To validate only one session active at a time of pokerboard.
+        """
         active_session = Session.objects.filter(pokerboard_id=attrs.id,status=Session.ONGOING)
         if active_session.exists():
             raise serializers.ValidationError("An active session already exists for this pokerboard.")
         return attrs
-    
+
