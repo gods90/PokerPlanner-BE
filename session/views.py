@@ -1,7 +1,6 @@
-from django.shortcuts import render
-from rest_framework import status, viewsets
+from rest_framework import viewsets
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from session.models import Session
 from session.serializers import SessionSerializer
@@ -15,13 +14,9 @@ class SessionViewSet(viewsets.ModelViewSet):
     serializer_class = SessionSerializer
     permission_classes = [IsAuthenticated]
 
-    def create(self, request, *args, **kwargs):
-        """
-            Create new session
-            Required : Token in header, Title, tickets/sprint/jql(atleast one)
-        """
-        serializer = self.get_serializer(data = {**request.data})
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    http_method_names = ['get','post']
+    
+    def get_object(self):
+        pokerboard_id = self.kwargs["pk"]
+        active_session = get_object_or_404(Session, pokerboard_id=pokerboard_id,status=Session.ONGOING)
+        return active_session

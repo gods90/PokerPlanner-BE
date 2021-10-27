@@ -18,7 +18,7 @@ class Session(Timestamp):
     )
 
     pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100,help_text='Title of the session.')
+    title = models.CharField(max_length=100, help_text='Title of the session.')
     status = models.IntegerField(
         choices=STATUS_CHOICES,
         default=ONGOING,
@@ -34,14 +34,14 @@ class UserEstimate(Timestamp):
     """
     Model to store user estimates
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE,
-                             help_text='User which has estimated the ticket.')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE,help_text='User which has estimated the ticket.'
+    )
     ticket = models.ForeignKey(
-        Ticket, on_delete=models.CASCADE, help_text='Ticket to which estimate belongs.')
-    estimation_duration = models.DurationField(
-        help_text='Duration for voting(in secs)')
-    estimate = models.PositiveIntegerField(
-        help_text='Value of estimate done by the user.')
+        Ticket, on_delete=models.CASCADE, help_text='Ticket to which estimate belongs.'
+    )
+    estimation_duration = models.DurationField(help_text='Duration for voting(in secs)')
+    estimate = models.PositiveIntegerField(help_text='Value of estimate done by the user.')
 
     def __str__(self):
         return f"{self.ticket} -> {self.user} -> {self.estimate}"

@@ -6,7 +6,7 @@ from pokerboard.models import Pokerboard
 class CustomPermissions(BasePermission):
 
     def has_permission(self, request, view):
-        pokerboard_id = view.kwargs['pk']
+        pokerboard_id = view.kwargs['pokerboard_id']
         pokerboard = Pokerboard.objects.get(id=pokerboard_id)
         if view.action == 'members':
             return request.user == pokerboard.manager

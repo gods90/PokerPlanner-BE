@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from group.models import Group
 from user.models import User
-from user.serializer.serializers import UserSerializer
 from user.serializer.serializers2 import GetUserSerializer
 
 

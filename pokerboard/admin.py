@@ -7,9 +7,11 @@ from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 class PokerboardAdmin(admin.ModelAdmin):
     list_display = ['id', 'title', 'manager']
 
+
 @admin.register(PokerboardUserGroup)
 class PokerboardUserGroupAdmin(admin.ModelAdmin):
     list_display = ['id', 'pokerboard', 'user', 'group', 'role']
+
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):

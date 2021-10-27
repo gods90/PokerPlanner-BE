@@ -9,4 +9,3 @@ router.register('', GroupViewSet)
 urlpatterns = [
     path("", include(router.urls)),
 ]
-

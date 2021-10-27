@@ -49,8 +49,8 @@ class Ticket(Timestamp):
         (NOTESTIMATED, 'notestimated'),
     )
 
-    pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE, 
-                                help_text='Pokerboard to which ticket belongs.'
+    pokerboard = models.ForeignKey(
+        Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.'
     )
     ticket_id = models.CharField(
         unique=True, max_length=100, help_text='Ticket ID imported from JIRA.'

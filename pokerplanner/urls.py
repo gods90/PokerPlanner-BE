@@ -13,6 +13,5 @@ urlpatterns = [
     path('group/', include('group.urls')),
     path('login/', ObtainAuthToken.as_view(), name='login'),
     path('api/docs/', schema_view),
-    path('session/',include('session.urls'))
+    path('session/', include('session.urls'))
 ]
-

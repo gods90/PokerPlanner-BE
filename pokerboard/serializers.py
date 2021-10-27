@@ -1,9 +1,7 @@
-from django.db.models import fields, manager
 import requests
 
 from rest_framework import serializers, status
 
-from group.models import Group
 from pokerboard import constants
 from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 from pokerplanner import settings
@@ -26,80 +24,53 @@ class PokerboardUserGroupSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'group', 'role', 'pokerboard']
 
 
-class PokerboardMembersSerializer(serializers.Serializer):
-    pokerboard_id = serializers.PrimaryKeyRelatedField(
-        queryset=Pokerboard.objects.all())
-    group_id = serializers.PrimaryKeyRelatedField(
-        queryset=Group.objects.all(), required=False)
-    email = serializers.EmailField(required=False)
-    role = serializers.ChoiceField(
-        choices=constants.ROLE_CHOICES, required=False)
+class PokerboardMembersSerializer(serializers.ModelSerializer):
+    """
+    Pokerboard members serializer
+    """
+    class Meta:
+        model = PokerboardUserGroup
+        fields = "__all__"
+        extra_kwargs = {
+            'pokerboard': {'read_only': True},
+            'user': {'read_only': True},
+            'group': {'read_only': True}
+        }
 
-    def validate(self, attrs):
-        pokerboard_id = attrs['pokerboard_id']
-        method = self.context['method']
+    def to_representation(self, instance):
+        repr = super().to_representation(instance)
+        repr["role"] = constants.ROLE_CHOICES[repr["role"]][1]
+        return repr
 
-        if 'email' in attrs.keys():
-            user = User.objects.filter(email=attrs['email'])
-            if not user.exists():
-                raise serializers.ValidationError('Invalid email!')
-
-            pokerboard_user = PokerboardUserGroup.objects.filter(
-                user_id=user[0].id, pokerboard_id=pokerboard_id.id)
-            
-            if not pokerboard_user.exists() and user!=pokerboard_id.manager:
-                raise serializers.ValidationError(
-                    'User not member of pokerboard!')
-
-        if method == 'DELETE':
-            if 'group_id' in attrs.keys():
-                group = attrs['group_id']
-
-                pokerboard_members = PokerboardUserGroup.objects.filter(
-                    pokerboard_id=pokerboard_id, group_id=group.id)
-                if not pokerboard_members.exists():
-                    raise serializers.ValidationError('No members found!')
-
-            elif 'email' not in attrs.keys():
-                raise serializers.ValidationError('Provide group_id/email!')
-
-        elif method == 'PATCH':
-            if 'role' not in attrs.keys():
-                raise serializers.ValidationError('Role not provided!')
-            if pokerboard_user[0].role == attrs['role']:
-                raise serializers.ValidationError('User already in same role.')
-        return attrs
 
 class PokerboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pokerboard
         fields = '__all__'
 
+
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
     manager = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all())
-    sprint_id = serializers.CharField(required=False,write_only=True)
-    tickets = TicketsSerializer(required=False,write_only=True)
-    jql = serializers.CharField(required=False,write_only=True)
+    sprint_id = serializers.CharField(required=False, write_only=True)
+    tickets = TicketsSerializer(required=False, write_only=True)
+    jql = serializers.CharField(required=False, write_only=True)
     ticket_responses = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Pokerboard
         fields = ['id', 'manager', 'title', 'description',
                   'estimation_type', 'tickets', 'sprint_id', 'ticket_responses', 'jql', 'game_duration']
-    
 
     def get_ticket_responses(self, instance):
         jira = settings.JIRA
-        # import pdb
-        # pdb.set_trace() 
         data = dict(instance)
         ticket_responses = []
 
-        myJql=""
+        myJql = ""
         # If sprint, then fetch all tickets in sprint and add
         if 'sprint_id' in data.keys():
-            myJql = "Sprint = "+ data['sprint_id']
+            myJql = "Sprint = " + data['sprint_id']
 
         # Adding tickets
         if 'tickets' in data.keys():
@@ -108,21 +79,21 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
             serializer.is_valid(raise_exception=True)
 
             if(len(myJql) != 0):
-                myJql+=" OR "
+                myJql += " OR "
             myJql += "issueKey in ("
             for ticket in tickets:
                 myJql = myJql + ticket + ','
-            myJql = myJql[:-1] +')'
+            myJql = myJql[:-1] + ')'
 
         # Adding jql
         if 'jql' in data.keys():
             if(len(myJql) != 0):
-                myJql+=" OR "
+                myJql += " OR "
             myJql += data['jql']
-            
-        jql=myJql
+
+        jql = myJql
         try:
-            if(len(jql)==0):
+            if(len(jql) == 0):
                 raise requests.exceptions.RequestException
             issues = jira.jql(jql)['issues']
             for issue in issues:
@@ -153,8 +124,8 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
         if valid_tickets == 0:
             raise serializers.ValidationError('Invalid tickets!')
-        
-        manager = User.objects.get(id=new_pokerboard["manager"]) 
+
+        manager = User.objects.get(id=new_pokerboard["manager"])
         new_pokerboard["manager"] = manager
         pokerboard = Pokerboard.objects.create(**new_pokerboard)
 
@@ -169,4 +140,3 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
             count += 1
 
         return pokerboard
-
