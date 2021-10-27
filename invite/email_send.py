@@ -1,37 +1,14 @@
-import smtplib
-import os
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
-username=os.environ["username"]
-password=os.environ["password"]
-
-def send_mail(html=None,text='',subject='Signup to join pokerplanner',from_email=username,to_emails=[]):
-    msg=MIMEMultipart('alternative')
-    msg['From']=from_email
-    msg['To']=", ".join(to_emails)
-    msg['Subject']=subject
-
-    html="""
-    <!DOCTYPE html>
-    <html lang="en">
-        <body>
-            <p>Hello,</p>
-            <p>You haven't signed up yet click here to join pokerplanner and start estimating tickets.</p>
-            <a href="http://127.0.0.1:5500/index.html#!/">Click here to signup.</a>
-        </body>
-    </html>
-    """
-    
-    html_part = MIMEText(html, 'html')
-    msg.attach(html_part)
-    msg_str=msg.as_string()
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
+from django.conf import settings
 
 
-    server=smtplib.SMTP(host='smtp.gmail.com',port=587)
-    server.ehlo()
-    server.starttls()
-    server.login(username,password)
-    server.sendmail(from_email,to_emails,msg_str)
-    server.quit()
-
+def send_invite_mail(manager_email, recipient):
+    context = {
+        'manager_email' : manager_email 
+    }
+    email_subject = 'Invitation to pokerboard',
+    email_text_body = render_to_string('invite_pokerboard_email_msg.txt', context)
+    email = EmailMessage(email_subject, email_text_body, settings.DEFAULT_FROM_EMAIL,
+                                   [recipient, ], )
+    return email.send(fail_silently=False)

@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
 from invite.models import Invite
-from invite.email_send import send_mail
-
+from invite.tasks import send_invite_email_task
 from pokerboard import constants
 from pokerboard.models import Pokerboard
 
@@ -58,7 +57,8 @@ class InviteCreateSerializer(serializers.Serializer):
                 user = User.objects.get(email=attrs['email'])
                 users.append(user)
             except User.DoesNotExist as e:
-                send_mail(to_emails=[attrs['email']])
+                pokerboard_manager_email = pokerboard.manager.email
+                send_invite_email_task.delay(pokerboard_manager_email, [attrs['email']])
                 raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
         else:
             raise serializers.ValidationError('Provide group_id/email!')
