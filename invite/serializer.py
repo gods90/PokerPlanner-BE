@@ -60,6 +60,7 @@ class InviteCreateSerializer(serializers.Serializer):
                 pokerboard_manager_email = pokerboard.manager.email
                 invite = Invite.objects.filter(email=attrs['email'], pokerboard_id=pokerboard.id)
                 if not invite.exists():
+                    invite = Invite.objects.create(**attrs)
                     send_invite_email_task.delay(pokerboard_manager_email, [attrs['email']], invite.id)
                 raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
         else:
