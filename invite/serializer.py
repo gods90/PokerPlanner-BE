@@ -11,7 +11,7 @@ from user.models import User
 class InviteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invite
-        fields = '__all__'
+        fields = ['id', 'status', 'pokerboard', 'user', 'group', 'user_role']
         extra_kwargs = {
             'pokerboard': {'read_only': True},
             'user': {'read_only': True},
@@ -76,7 +76,6 @@ class InviteCreateSerializer(serializers.Serializer):
                         'Invite already sent!')
 
         for user in users:
-            # invite = Invite.objects.update_or_create( pokerboard_id = pokerboard.id, user_id = user.id, defaults={'status' : constants.PENDING,'user_role' : role})
             try:
                 invite = Invite.objects.get(pokerboard_id = pokerboard.id, user_id = user.id)
                 invite.status = constants.PENDING
@@ -86,8 +85,10 @@ class InviteCreateSerializer(serializers.Serializer):
             except Invite.DoesNotExist:
                 new_data = {
                     'pokerboard_id' : pokerboard.id,
-                    'user_id' : user.id
+                    'user_id' : user.id,
                 }
+                if 'group_id' in attrs.keys():
+                    new_data['group_id'] = attrs['group_id'].id
                 if 'user_role' in attrs.keys():
                     new_data['user_role'] = attrs['user_role']
                 invite = Invite.objects.create(**new_data)

@@ -1,9 +1,6 @@
-from django import http
-from django.db.models import query
 from django.db.models.query_utils import Q
 
 from rest_framework import status, viewsets
-from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from invite.models import Invite
@@ -13,7 +10,7 @@ from pokerboard import constants
 from pokerboard.models import Pokerboard, PokerboardUserGroup
 from pokerboard.permissions import CustomPermissions
 from pokerboard.serializers import (PokerBoardCreationSerializer,
-                                    PokerboardMembersSerializer, PokerboardSerializer)
+                                    PokerboardMembersSerializer, PokerboardSerializer, PokerboardGroupSerializer)
 
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
@@ -40,13 +37,20 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
             Optional : Configuration
         """
         serializer = self.get_serializer(
-            data={**request.data, 'manager': request.user.id})
+            data={**request.data, 'manager': request.user.id}
+        )
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        pokerboard = self.perform_create(serializer)
+        response = serializer.data
+        response['id'] = pokerboard.id
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(response, status=status.HTTP_201_CREATED, headers=headers)
 
-     
+    def perform_create(self, serializer):
+        return serializer.save()
+
+            
+    
 class PokerboardMemberViewSet(viewsets.ModelViewSet):
     """
     Pokerboard Member view to delete member from pokerboard,get pokerboard members 
@@ -72,3 +76,39 @@ class PokerboardMemberViewSet(viewsets.ModelViewSet):
         invite.save()
         instance.delete()
         
+    
+class PokerboardGroupViewSet(viewsets.ModelViewSet):
+    """
+    Pokerboard Member view to delete member from pokerboard,get pokerboard members 
+    and change pokerboard member role.
+    """
+    queryset = PokerboardUserGroup.objects.all()
+    serializer_class = PokerboardGroupSerializer
+    permission_classes=[IsAuthenticated, CustomPermissions]
+    http_method_names = ['patch','delete','get']
+
+    def get_queryset(self):
+        pokerboard_id = self.kwargs['pokerboard_id']
+        if self.action in ['destroy','update']:
+            return PokerboardUserGroup.objects.filter(pokerboard_id=pokerboard_id,group_id=self.kwargs['pk'])
+        return PokerboardUserGroup.objects.filter(group__isnull=False,pokerboard_id=pokerboard_id).distinct('group')
+
+    def destroy(self, request, *args, **kwargs):
+        pokerboard_id = self.kwargs['pokerboard_id']
+        group_id = self.kwargs['pk']
+        pokerboard_members = self.get_queryset()
+        if(len(pokerboard_members) == 0 ):
+            return Response({"detail":"Not found."},status=status.HTTP_404_NOT_FOUND )
+        invites = Invite.objects.filter(pokerboard_id=pokerboard_id,group_id=group_id)
+        invites.all().update(status = constants.DECLINED)
+        pokerboard_members.all().delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        pokerboard_members = self.get_queryset()
+        serializer = PokerboardMembersSerializer(pokerboard_members, data=request.data, partial=partial, many=True)
+        serializer.is_valid(raise_exception=True)
+        pokerboard_members.all().update(user_role=request.data['user_role'])
+
+        return Response(serializer.data)

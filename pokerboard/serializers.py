@@ -1,6 +1,10 @@
+from re import search
+import re
 import requests
 
 from rest_framework import serializers, status
+from rest_framework.utils import field_mapping
+from group.models import Group
 
 from pokerboard import constants
 from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
@@ -43,10 +47,26 @@ class PokerboardMembersSerializer(serializers.ModelSerializer):
         return repr
 
 
+class PokerboardGroupSerializer(serializers.ModelSerializer):
+    """
+    Pokerboard Group Serializer
+    """
+    class Meta:
+        model = PokerboardUserGroup
+        fields = ['group']
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        group = Group.objects.get(id=rep['group'])
+        rep['group'] =group.name
+        rep['group_id'] = group.id
+        return rep
+
+
 class PokerboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pokerboard
-        fields = '__all__'
+        fields = ['id', 'title', 'game_duration', 'description', 'manager']
 
 
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
@@ -59,8 +79,7 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pokerboard
-        fields = ['id', 'manager', 'title', 'description',
-                  'estimation_type', 'tickets', 'sprint_id', 'ticket_responses', 'jql', 'game_duration']
+        fields = '__all__'
 
     def get_ticket_responses(self, instance):
         jira = settings.JIRA
@@ -127,8 +146,9 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
         manager = User.objects.get(id=new_pokerboard["manager"])
         new_pokerboard["manager"] = manager
-        pokerboard = Pokerboard.objects.create(**new_pokerboard)
-
+        pokerboard = Pokerboard(**new_pokerboard)
+        pokerboard.save()
+        
         for ticket_response in ticket_responses:
             if ticket_response['status_code'] != 200:
                 continue
