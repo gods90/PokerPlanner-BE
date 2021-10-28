@@ -15,7 +15,7 @@ class InviteSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {
             'pokerboard': {'read_only': True},
-            'user': {'read_only': True},
+            'email': {'read_only': True},
             'group': {'read_only': True},
         }
 
@@ -58,14 +58,16 @@ class InviteCreateSerializer(serializers.Serializer):
                 users.append(user)
             except User.DoesNotExist as e:
                 pokerboard_manager_email = pokerboard.manager.email
-                send_invite_email_task.delay(pokerboard_manager_email, [attrs['email']])
+                invite = Invite.objects.filter(email=attrs['email'], pokerboard_id=pokerboard.id)
+                if not invite.exists():
+                    send_invite_email_task.delay(pokerboard_manager_email, [attrs['email']], invite.id)
                 raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
         else:
             raise serializers.ValidationError('Provide group_id/email!')
 
         for user in users:
             invite = Invite.objects.filter(
-                user=user.id, pokerboard=pokerboard.id)
+                email=user.email, pokerboard=pokerboard.id)
             if pokerboard.manager == user:
                 raise serializers.ValidationError(
                     'Manager cannot be invited!')
@@ -80,7 +82,7 @@ class InviteCreateSerializer(serializers.Serializer):
         for user in users:
             # invite = Invite.objects.update_or_create( pokerboard_id = pokerboard.id, user_id = user.id, defaults={'status' : constants.PENDING,'user_role' : role})
             try:
-                invite = Invite.objects.get(pokerboard_id = pokerboard.id, user_id = user.id)
+                invite = Invite.objects.get(pokerboard_id = pokerboard.id, email = user.email)
                 invite.status = constants.PENDING
                 if 'user_role' in attrs.keys():
                     invite.user_role = attrs['user_role']
@@ -88,7 +90,7 @@ class InviteCreateSerializer(serializers.Serializer):
             except Invite.DoesNotExist:
                 new_data = {
                     'pokerboard_id' : pokerboard.id,
-                    'user_id' : user.id
+                    'email' : user.email
                 }
                 if 'user_role' in attrs.keys():
                     new_data['user_role'] = attrs['user_role']

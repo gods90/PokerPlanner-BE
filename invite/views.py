@@ -19,7 +19,7 @@ class InviteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Invite.objects.filter(user_id=self.request.user.id, status=constants.PENDING)
+        return Invite.objects.filter(email=self.request.user.email, status=constants.PENDING)
 
 
     def get_serializer_class(self):

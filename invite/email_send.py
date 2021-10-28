@@ -3,7 +3,7 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 
 
-def send_invite_mail(manager_email, recipient):
+def send_invite_mail(manager_email, recipient, invite_id):
     context = {
         'manager_email': manager_email
     }

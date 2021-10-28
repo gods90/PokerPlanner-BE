@@ -5,7 +5,6 @@ from  pokerboard import constants
 
 from group.models import Group
 
-from user.models import User
 
 # Create your models here.
 
@@ -15,8 +14,7 @@ class Invite(models.Model):
     """
     pokerboard = models.ForeignKey(
         Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard of which invite has been sent.')
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, help_text='User which is invited.')
+    email = models.EmailField(help_text='Email of user which is invited.')
     user_role = models.IntegerField(
         choices=constants.PLAYER,
         default=constants.PLAYER,
@@ -29,6 +27,6 @@ class Invite(models.Model):
 
     def __str__(self):
         if self.group != None:
-            return f'Invitee: {self.user} -> Pokerboard: {self.pokerboard} -> Group: {self.group}'
+            return f'Invitee: {self.email} -> Pokerboard: {self.pokerboard} -> Group: {self.group}'
         else:
-            return f'Invitee: {self.user} -> Pokerboard: {self.pokerboard}'
+            return f'Invitee: {self.email} -> Pokerboard: {self.pokerboard}'
