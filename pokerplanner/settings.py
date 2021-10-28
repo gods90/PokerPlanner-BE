@@ -13,6 +13,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -69,7 +70,16 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10
 }
 
-WSGI_APPLICATION = 'pokerplanner.wsgi.application'
+# WSGI_APPLICATION = 'pokerplanner.wsgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("localhost", 6379)],
+        },
+    },
+}
 
 DATABASES = {
     "default": {
@@ -118,3 +128,5 @@ JIRA = Jira(
     username=os.environ['JIRA_USERNAME'],
     password=os.environ['JIRA_PASSWORD']
 )
+
+ASGI_APPLICATION = 'pokerplanner.asgi.application'

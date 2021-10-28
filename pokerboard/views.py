@@ -10,10 +10,11 @@ from invite.models import Invite
 
 
 from pokerboard import constants
-from pokerboard.models import Pokerboard, PokerboardUserGroup
+from pokerboard import serializers
+from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 from pokerboard.permissions import CustomPermissions
 from pokerboard.serializers import (PokerBoardCreationSerializer,
-                                    PokerboardMembersSerializer, PokerboardSerializer)
+                                    PokerboardMembersSerializer, PokerboardSerializer, TicketSerializer)
 
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
