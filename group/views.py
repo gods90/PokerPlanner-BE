@@ -15,28 +15,29 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
     Group View for Performing CRUD operations.
     """
-
-    serializer_class = GroupSerializer
     queryset = Group.objects.all()
     permission_classes = [IsAuthenticated, GroupCustomPermissions]
 
     def get_serializer_class(self, *args, **kwargs):
         if self.request.method in ['PATCH']:
             return GroupUpdateSerializer
-        return super().get_serializer_class()
+        return GroupSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(
-            data={**request.data, 'created_by': request.user.id})
+            data={**request.data, 'created_by': request.user.id}
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
-        return Group.objects.filter(users=self.request.user)
+        return Group.objects.filter(users__in=[self.request.user])
 
-    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated, GroupCustomPermissions])
+    @action(
+        detail=True, methods=['delete'], permission_classes=[IsAuthenticated, GroupCustomPermissions]
+    )
     def removemembers(self, request, pk=None):
         """
         /group/108/removemembers/ - creator-can delete from group
@@ -52,7 +53,8 @@ class GroupViewSet(viewsets.ModelViewSet):
         }
         email = self.request.query_params.get('email')
         serializer = GroupMemberDeleteSerializer(
-            data={"email": email}, context=context)
+            data={"email": email}, context=context
+        )
         serializer.is_valid(raise_exception=True)
         group = Group.objects.get(id=group_id)
         user = User.objects.get(email=email)

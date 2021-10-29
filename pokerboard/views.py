@@ -9,7 +9,8 @@ from invite.models import Invite
 from pokerboard import constants
 from pokerboard.models import Pokerboard, PokerboardUserGroup
 from pokerboard.serializers import (PokerBoardCreationSerializer,
-                                    PokerboardMembersSerializer, PokerboardSerializer, PokerboardGroupSerializer)
+                                    PokerboardMembersSerializer, 
+                                    PokerboardSerializer, PokerboardGroupSerializer)
 
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
@@ -37,9 +38,6 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         """
         request.data['manager'] = request.user.id
         return super().create(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        return serializer.save()
 
 
 class PokerboardMemberViewSet(viewsets.ModelViewSet):
@@ -81,8 +79,12 @@ class PokerboardGroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         pokerboard_id = self.kwargs['pokerboard_id']
         if self.action in ['destroy', 'update']:
-            return PokerboardUserGroup.objects.filter(pokerboard_id=pokerboard_id, group_id=self.kwargs['pk'])
-        return PokerboardUserGroup.objects.filter(group__isnull=False, pokerboard_id=pokerboard_id).distinct('group')
+            return PokerboardUserGroup.objects.filter(
+                pokerboard_id=pokerboard_id, group_id=self.kwargs['pk']
+            )
+        return PokerboardUserGroup.objects.filter(
+            group__isnull=False, pokerboard_id=pokerboard_id
+        ).distinct('group')
 
     def destroy(self, request, *args, **kwargs):
         pokerboard_id = self.kwargs['pokerboard_id']

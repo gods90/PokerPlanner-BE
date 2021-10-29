@@ -1,9 +1,12 @@
 from django.db import models
 
 from common.models import Timestamp
+
 from group.models import Group
+
 from pokerboard import constants
 from pokerboard.models import Pokerboard
+
 from user.models import User
 
 

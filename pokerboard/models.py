@@ -10,7 +10,9 @@ from user.models import User
 
 
 class Pokerboard(Timestamp):
-    """ Model to store Pokerboard settings."""
+    """
+    Model to store Pokerboard settings.
+    """
     SERIES = 1
     EVEN = 2
     ODD = 3
@@ -34,7 +36,9 @@ class Pokerboard(Timestamp):
     estimation_type = models.IntegerField(
         choices=ESTIMATION_CHOICES, default=SERIES, help_text='Estimation type.'
     )
-    game_duration = models.DurationField(null=False, help_text="Duration for game in pokerboard.")
+    game_duration = models.DurationField(
+        null=False, help_text="Duration for game in pokerboard."
+    )
     
     def __str__(self) -> str:
         return self.title

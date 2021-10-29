@@ -22,7 +22,7 @@ class ChangePasswordView(generics.UpdateAPIView):
     View to change user password
     """
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
 
     def get_object(self):

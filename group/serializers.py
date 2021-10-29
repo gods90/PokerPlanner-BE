@@ -99,7 +99,7 @@ class GroupMemberDeleteSerializer(serializers.Serializer):
         if group.created_by == user[0]:
             raise serializers.ValidationError(
                 "Cannot delete creator of group."
-                )
+            )
         if not group.users.filter(email=attrs).exists():
             raise serializers.ValidationError('User not part of group.')
 

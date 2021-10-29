@@ -1,6 +1,7 @@
 import re 
 
 from django.contrib.auth.password_validation import validate_password
+
 from rest_framework import serializers
 
 from group.models import Group
@@ -9,6 +10,9 @@ from user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for user
+    """
     groups = serializers.SerializerMethodField()
     class Meta:
         model = User
@@ -57,6 +61,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class GetUserSerializer(serializers.ModelSerializer):
+    """
+    Serializer to get user details.
+    """
     class Meta:
         model = User
         fields = ['email', 'first_name', 'last_name', 'id']
@@ -87,4 +94,3 @@ class ChangePasswordSerializer(serializers.Serializer):
         instance.save()
 
         return instance
-

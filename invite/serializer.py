@@ -68,7 +68,9 @@ class InviteCreateSerializer(serializers.Serializer):
                 users.append(user)
             except User.DoesNotExist as e:
                 send_mail(to_emails=[attrs['email']])
-                raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
+                raise serializers.ValidationError(
+                    "Email to signup in pokerplanner has been sent.Please check your email."
+                )
         else:
             raise serializers.ValidationError('Provide group_id/email!')
 
