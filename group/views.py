@@ -4,8 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from group.models import Group
-from group.permissions import CustomPermissions
-from group.serializer.serializers import (GroupDeleteSerializer,
+from group.permissions import GroupCustomPermissions
+from group.serializers import (GroupMemberDeleteSerializer,
                                           GroupSerializer,
                                           GroupUpdateSerializer)
 from user.models import User
@@ -18,7 +18,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
-    permission_classes = [IsAuthenticated, CustomPermissions]
+    permission_classes = [IsAuthenticated, GroupCustomPermissions]
 
     def get_serializer_class(self, *args, **kwargs):
         if self.request.method in ['PATCH']:
@@ -36,7 +36,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Group.objects.filter(users=self.request.user)
 
-    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated, CustomPermissions])
+    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated, GroupCustomPermissions])
     def removemembers(self, request, pk=None):
         """
         /group/108/removemembers/ - creator-can delete from group
@@ -51,7 +51,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             "group_id": group_id
         }
         email = self.request.query_params.get('email')
-        serializer = GroupDeleteSerializer(
+        serializer = GroupMemberDeleteSerializer(
             data={"email": email}, context=context)
         serializer.is_valid(raise_exception=True)
         group = Group.objects.get(id=group_id)

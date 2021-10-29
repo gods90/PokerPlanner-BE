@@ -9,7 +9,6 @@ from rest_framework.authtoken.models import Token
 from group.models import Group
 from invite.models import Invite
 from pokerboard import constants
-import pokerboard
 from user.models import User
 from pokerboard.models import Pokerboard
 

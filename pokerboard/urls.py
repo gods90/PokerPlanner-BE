@@ -11,4 +11,3 @@ router.register('', PokerBoardViewSet, basename="pokerboard")
 urlpatterns = [
     path("", include(router.urls)),
 ]
-

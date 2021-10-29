@@ -19,7 +19,7 @@ class Invite(Timestamp):
         User, on_delete=models.CASCADE, help_text='User which is invited.'
     )
     user_role = models.IntegerField(
-        choices=constants.PLAYER,
+        choices=constants.ROLE_CHOICES,
         default=constants.PLAYER,
         help_text='Default user role is player.',
     )

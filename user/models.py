@@ -3,6 +3,7 @@ from django.db import models
 
 from common.models import Timestamp
 
+
 class User(AbstractUser, Timestamp):
     """
     A custom user model to store details about a user.

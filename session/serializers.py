@@ -1,25 +1,16 @@
-from django.db.models import query
-import requests
-from rest_framework import serializers, status
-import pokerboard
+from rest_framework import serializers
 
 from pokerboard.models import Pokerboard
-from pokerplanner import settings
+
 from session.models import Session
 
 
 class SessionSerializer(serializers.ModelSerializer):
-
+    status = serializers.CharField(source='get_status_display')
     pokerboard = serializers.PrimaryKeyRelatedField(queryset=Pokerboard.objects.all())
-    
     class Meta:
         model = Session
         fields = '__all__'
-
-    def to_representation(self, instance):
-        repr = super().to_representation(instance)
-        repr["status"] =  Session.STATUS_CHOICES[repr["status"]][1]
-        return repr
     
     def validate_pokerboard(self, attrs):
         """

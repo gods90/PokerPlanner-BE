@@ -1,10 +1,10 @@
-import re
+import re 
 
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 from group.models import Group
-from group.serializer.serializers2 import GetGroupSerializer
+
 from user.models import User
 
 
@@ -17,13 +17,9 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'password': {'write_only': True},
         }
-    
-    def get_groups(self, user):
-        res = Group.objects.filter(users__in=[user])
-        serializer = GetGroupSerializer(res, many=True)
-        return serializer.data
 
     def get_groups(self, user):
+        from group.serializers import GetGroupSerializer
         res = Group.objects.filter(users__in=[user])
         serializer = GetGroupSerializer(res, many=True)
         return serializer.data
@@ -37,7 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
-
+    
     def validate_password(self, password):
         """
         To check if password is of atleast length 8,
@@ -58,6 +54,12 @@ class UserSerializer(serializers.ModelSerializer):
                                               "must contain one uppercase, one lowercase "
                                               "one special character!")
         return super().validate(password)
+
+
+class GetUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name', 'id']
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -85,3 +87,4 @@ class ChangePasswordSerializer(serializers.Serializer):
         instance.save()
 
         return instance
+

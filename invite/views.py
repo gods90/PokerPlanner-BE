@@ -1,14 +1,11 @@
 from rest_framework import status, viewsets
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.contrib.auth import tokens
 
 from invite.models import Invite
 from invite.serializer import InviteCreateSerializer, InviteSerializer
 from pokerboard import constants
-import pokerboard
 from pokerboard.serializers import PokerboardUserGroupSerializer
 
 
@@ -17,7 +14,6 @@ class InviteViewSet(viewsets.ModelViewSet):
     Invite View for CRUD operations
     """
     queryset = Invite.objects.all()
-    serializer_class = InviteSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -26,7 +22,7 @@ class InviteViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return InviteCreateSerializer
-        return super().get_serializer_class()
+        return InviteSerializer
     
     def create(self, request, *args, **kwargs):
         serializer = InviteCreateSerializer(data=request.data)
@@ -56,9 +52,9 @@ class InviteViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         invite = self.get_object()
         if invite.status != constants.PENDING:
-            return Response(data={'msg' : 'Already accepted'},status=status.HTTP_400_BAD_REQUEST) 
+            return Response(data={'msg' : 'Already accepted'}, status=status.HTTP_400_BAD_REQUEST) 
         invite.status = constants.DECLINED
         invite.save()
         serializer = InviteSerializer(instance=invite)
         return Response(data=serializer.data)
-    
+

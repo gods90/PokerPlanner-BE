@@ -1,24 +1,30 @@
-from re import search
-import re
 import requests
 
 from rest_framework import serializers, status
-from rest_framework.utils import field_mapping
+
 from group.models import Group
 
-from pokerboard import constants
 from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
+
 from pokerplanner import settings
+
 from user.models import User
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    """
+    Serializer for tickets stored in database.
+    Sending response, update tickets etc.
+    """
     class Meta:
         model = Ticket
         fields = ['session', 'ticket_id', 'order', 'estimation_date', 'status']
 
 
 class TicketsSerializer(serializers.ListSerializer):
+    """
+    Serializer to validate array of jira-id provided by user.
+    """
     child = serializers.CharField()
 
 
@@ -32,6 +38,8 @@ class PokerboardMembersSerializer(serializers.ModelSerializer):
     """
     Pokerboard members serializer
     """
+    role = serializers.CharField(source='get_role_display')
+
     class Meta:
         model = PokerboardUserGroup
         fields = "__all__"
@@ -40,11 +48,6 @@ class PokerboardMembersSerializer(serializers.ModelSerializer):
             'user': {'read_only': True},
             'group': {'read_only': True}
         }
-
-    def to_representation(self, instance):
-        repr = super().to_representation(instance)
-        repr["role"] = constants.ROLE_CHOICES[repr["role"]][1]
-        return repr
 
 
 class PokerboardGroupSerializer(serializers.ModelSerializer):
@@ -58,20 +61,27 @@ class PokerboardGroupSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         group = Group.objects.get(id=rep['group'])
-        rep['group'] =group.name
+        rep['group'] = group.name
         rep['group_id'] = group.id
         return rep
 
 
 class PokerboardSerializer(serializers.ModelSerializer):
+    """
+    Pokerboard serializer
+    """
     class Meta:
         model = Pokerboard
         fields = ['id', 'title', 'game_duration', 'description', 'manager']
 
 
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
+    """
+    Serializer to create pokerboard.
+    """
     manager = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all())
+        queryset=User.objects.all()
+    )
     sprint_id = serializers.CharField(required=False, write_only=True)
     tickets = TicketsSerializer(required=False, write_only=True)
     jql = serializers.CharField(required=False, write_only=True)
@@ -97,7 +107,7 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
             serializer = TicketsSerializer(data=tickets)
             serializer.is_valid(raise_exception=True)
 
-            if(len(myJql) != 0):
+            if len(myJql) != 0:
                 myJql += " OR "
             myJql += "issueKey in ("
             for ticket in tickets:
@@ -112,7 +122,7 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
         jql = myJql
         try:
-            if(len(jql) == 0):
+            if len(jql) == 0:
                 raise requests.exceptions.RequestException
             issues = jira.jql(jql)['issues']
             for issue in issues:
@@ -148,15 +158,19 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
         new_pokerboard["manager"] = manager
         pokerboard = Pokerboard(**new_pokerboard)
         pokerboard.save()
-        
-        for ticket_response in ticket_responses:
-            if ticket_response['status_code'] != 200:
-                continue
-            new_ticket_data = {}
-            new_ticket_data['pokerboard'] = pokerboard
-            new_ticket_data['ticket_id'] = ticket_response['key']
-            new_ticket_data['order'] = count
-            Ticket.objects.create(**new_ticket_data)
-            count += 1
+
+        ticket_responses = [
+            (
+                ticket_response
+            ) for ticket_response in ticket_responses if ticket_response['status_code'] == 200
+        ]
+
+        Ticket.objects.bulk_create(
+            [
+                Ticket(
+                    pokerboard=pokerboard, ticket_id=ticket_response['key'], order=ind
+                ) for ind, ticket_response in enumerate(ticket_responses)
+            ]
+        )
 
         return pokerboard
