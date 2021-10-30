@@ -120,4 +120,4 @@ class GetTicketViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         pokerboard_id = self.kwargs['pokerboard_id']
         return Ticket.objects.filter(
             pokerboard_id=pokerboard_id, status=constants.NOTESTIMATED
-        )
+        ).order_by('-order')
