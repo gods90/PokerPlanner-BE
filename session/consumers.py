@@ -6,10 +6,11 @@ from django.db.models import manager
 from django.db.models.query_utils import Q
 from pokerboard import constants
 from rest_framework import serializers
-from pokerboard.models import Pokerboard
+from pokerboard.models import Pokerboard, Ticket
 
 from session.models import Session
 from session.serializers import MethodSerializer
+from session.utils import move_ticket_to_last
 from user.serializer.serializers import UserSerializer
 
 class TestConsumer(AsyncJsonWebsocketConsumer):
@@ -21,15 +22,15 @@ class TestConsumer(AsyncJsonWebsocketConsumer):
         session_id = self.scope['url_route']['kwargs']['session_id']
         self.room_name = session_id
         self.room_group_name = 'session_%s' % self.room_name
-        session = Session.objects.filter(id=session_id)
-        
+        self.session = Session.objects.filter(id=session_id)
+
         #Session does not exist.
-        if not session.exists():
+        if not self.session.exists():
             await self.close()
             return
         
         #User is anonymous or session is not ongoing
-        if type(self.scope["user"])==AnonymousUser or session.first().status != Session.ONGOING:
+        if type(self.scope["user"])==AnonymousUser or self.session.first().status != Session.ONGOING:
             await self.close()
             return
         
@@ -37,7 +38,7 @@ class TestConsumer(AsyncJsonWebsocketConsumer):
         pokerboard = Pokerboard.objects.filter(Q(manager=self.scope['user']) | 
                 Q(invite__user=self.scope['user'],invite__status=constants.ACCEPTED)).distinct()
         
-        session_pokerboard = pokerboard.filter(id=session.first().pokerboard.id) 
+        session_pokerboard = pokerboard.filter(id=self.session.first().pokerboard.id) 
         if not session_pokerboard:
             await self.close()
             return
@@ -103,7 +104,13 @@ class TestConsumer(AsyncJsonWebsocketConsumer):
             "type":event["type"],
             "message":serializer.data
         }
-        
+    
+    async def skip_ticket(self,event):
+        manager = self.session[0].pokerboard.manager
+        ticket_id = event["message"]["ticket"]
+        if self.scope["user"] == manager and Ticket.objects.get(id=ticket_id).status==Ticket.NOTESTIMATED:
+            move_ticket_to_last(ticket_id,manager)
+    
     async def receive(self, text_data=None, bytes_data=None):
         try:
             data_json = json.loads(text_data)
@@ -116,6 +123,7 @@ class TestConsumer(AsyncJsonWebsocketConsumer):
                 'type':method_name,
                 'message':method_value
             })
+            
             # Send message to room group
             await self.channel_layer.group_send(
                 self.room_group_name,

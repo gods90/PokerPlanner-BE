@@ -113,7 +113,7 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
         return ticket_responses
 
     def create(self, validated_data):
-        count = 0
+        count = 1
         new_pokerboard = {key: val for key, val in self.data.items() if key not in [
             'sprint_id', 'tickets', 'jql']}
         ticket_responses = new_pokerboard.pop('ticket_responses')

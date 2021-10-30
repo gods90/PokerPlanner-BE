@@ -32,5 +32,14 @@ class SessionSerializer(serializers.ModelSerializer):
 
 
 class MethodSerializer(serializers.Serializer):
-    method_name = serializers.ChoiceField(choices=["estimate", "start_game"])
+    method_name = serializers.ChoiceField(choices=["estimate", "start_game", "skip_ticket"])
     method_value = serializers.DictField()
+
+
+class CommentSerializer(serializers.Serializer):
+    """
+    Comment serializer with comment and the issue to comment on
+    """
+    comment = serializers.CharField()
+    issue = serializers.SlugField()
+
