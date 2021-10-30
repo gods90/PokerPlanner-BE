@@ -112,11 +112,11 @@ class GetTicketViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     """
     View for getting all tickets in the pokerboard
     """
+    pagination_class = None
     serializer_class = TicketSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        print(self)
         pokerboard_id = self.kwargs['pokerboard_id']
         return Ticket.objects.filter(
             pokerboard_id=pokerboard_id, status=constants.NOTESTIMATED
