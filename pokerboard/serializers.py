@@ -1,9 +1,6 @@
-from re import search
-import re
 import requests
 
 from rest_framework import serializers, status
-from rest_framework.utils import field_mapping
 from group.models import Group
 
 from pokerboard import constants

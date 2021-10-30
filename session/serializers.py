@@ -1,10 +1,6 @@
-from django.db.models import query
-import requests
-from rest_framework import serializers, status
-import pokerboard
+from rest_framework import serializers
 
 from pokerboard.models import Pokerboard
-from pokerplanner import settings
 from session.models import Session
 
 
@@ -30,3 +26,6 @@ class SessionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("An active session already exists for this pokerboard.")
         return attrs
 
+class MethodSerializer(serializers.Serializer):
+    method_name = serializers.ChoiceField(choices=["estimate", "start_game"])
+    method_value = serializers.DictField()
