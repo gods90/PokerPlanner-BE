@@ -14,4 +14,5 @@ ws_patterns = [
 
 application = ProtocolTypeRouter({
   "websocket": TokenAuthMiddleware(URLRouter(ws_patterns)),
+  # "websocket": URLRouter(ws_patterns),
 })

@@ -31,7 +31,7 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         
     def get_queryset(self):
         user = Pokerboard.objects.filter(Q(manager=self.request.user) | 
-                Q(invite__user=self.request.user,invite__status=constants.ACCEPTED)).distinct()
+                Q(invite__user=self.request.user,invite__status=constants.ACCEPTED)).prefetch_related("tickets")
         return user
     
     def create(self, request, *args, **kwargs):

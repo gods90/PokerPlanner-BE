@@ -23,15 +23,12 @@ class UserSerializer(serializers.ModelSerializer):
         serializer = GetGroupSerializer(res, many=True)
         return serializer.data
 
-    def get_groups(self, user):
-        res = Group.objects.filter(users__in=[user])
-        serializer = GetGroupSerializer(res, many=True)
-        return serializer.data
-
     def create(self, validated_data):
         """
         Overriding create method to hash password and then save.
         """
+        import pdb
+        pdb.set_trace()
         password = validated_data['password']
         user = User(**validated_data)
         user.set_password(password)

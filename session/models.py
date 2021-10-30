@@ -17,7 +17,7 @@ class Session(Timestamp):
         (HASENDED, "hasended"),
     )
 
-    pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE)
+    pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE, related_name="session")
     title = models.CharField(max_length=100, help_text='Title of the session.')
     status = models.IntegerField(
         choices=STATUS_CHOICES,

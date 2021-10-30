@@ -30,3 +30,7 @@ class SessionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("An active session already exists for this pokerboard.")
         return attrs
 
+
+class MethodSerializer(serializers.Serializer):
+    method_name = serializers.ChoiceField(choices=["estimate", "start_game"])
+    method_value = serializers.DictField()
