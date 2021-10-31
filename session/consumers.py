@@ -1,4 +1,3 @@
-from collections import defaultdict
 import json
 import requests
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -13,14 +12,13 @@ from pokerboard.models import Pokerboard, Ticket
 
 from session.models import Session
 from session.serializers import MethodSerializer
-from session.utils import move_ticket_to_last
 from user.serializer.serializers import UserSerializer
 
 from rest_framework.exceptions import ValidationError
 
 from rest_framework import serializers
 from pokerplanner import settings
-from session.utils import checkEstimateValue
+from session.utils import checkEstimateValue, set_user_estimates, move_ticket_to_last
 
 class TestConsumer(AsyncWebsocketConsumer):
     
@@ -30,7 +28,9 @@ class TestConsumer(AsyncWebsocketConsumer):
         """
         session_id = self.scope['url_route']['kwargs']['session_id']
         self.session = Session.objects.filter(id=session_id,status=Session.ONGOING)
-
+        self.room_name = session_id
+        self.room_group_name = 'session_%s' % self.room_name
+       
         #Session does not exist or session is not ongoing.
         if not self.session.exists():
             await self.close()
@@ -72,7 +72,7 @@ class TestConsumer(AsyncWebsocketConsumer):
         
         await self.accept()
         self.pokerboard_manager = pokerboard.first().manager
-        
+
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -157,6 +157,30 @@ class TestConsumer(AsyncWebsocketConsumer):
         except json.decoder.JSONDecodeError as e:
             await self.send(text_data=json.dumps({"error":"invalid json input"}))
         
+    async def final_estimate(self,event):
+        """
+        Final estimate of ticket set by manager.
+        """
+        session = Session.objects.get(id=self.scope['url_route']['kwargs']['session_id'])
+        deck_type = session.pokerboard.estimation_type
+        ticket_key = event["message"]["ticket_key"]
+        estimate = event["message"]["estimate"]
+        if not checkEstimateValue(deck_type,estimate):
+            raise ValidationError("Invalid estimate value")
+        if self.scope['user'] == self.pokerboard_manager:
+            jira = settings.JIRA
+            set_estimate = {'customfield_10016':estimate}
+            jira.update_issue_field(ticket_key, set_estimate)     
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'broadcast',
+                    'message': f"Final estimate of {ticket_key} is {estimate}"
+                }
+            )
+            set_user_estimates(self.estimates, ticket_key)
+            self.timer = datetime.now()
+
     async def estimate(self, event):
         """
         Estimates tickets by user and manager and also update in jira.
@@ -168,28 +192,25 @@ class TestConsumer(AsyncWebsocketConsumer):
             estimate = event["message"]["estimate"]
             if not checkEstimateValue(deck_type,estimate):
                 raise ValidationError("Invalid estimate value")
-            if self.scope['user'] == self.pokerboard_manager:
-                jira = settings.JIRA
-                set_estimate = {'customfield_10016':estimate}
-                jira.update_issue_field(ticket_key, set_estimate)     
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {
-                        'type': 'broadcast',
-                        'message': f"Final Estimate on ticket {ticket_key} is {estimate}"
-                    }
-                )
-            else:
-                manager_room_name = 'user_%s' % self.pokerboard_manager.id
-                await self.channel_layer.group_send(
-                    manager_room_name,
-                    {
-                        'type': 'message.manager',
-                        "username": self.scope['user'].email,
-                        'ticket_key':ticket_key,
-                        'message': estimate
-                    }
-                )
+            
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'broadcast',
+                    'message': f"{self.scope['user'].email} has estimated {ticket_key}"
+                }
+            )
+
+            manager_room_name = 'user_%s' % self.pokerboard_manager.id
+            await self.channel_layer.group_send(
+                manager_room_name,
+                {
+                    'type': 'message.manager',
+                    "username": self.scope['user'].email,
+                    'ticket_key':ticket_key,
+                    'estimate': estimate
+                }
+            )
         except ValidationError as e:
             await self.send(text_data=json.dumps({"error":f'{e}'}))
         except KeyError as e:
@@ -206,11 +227,14 @@ class TestConsumer(AsyncWebsocketConsumer):
             ({
                 "username": event["username"],
                 "ticket": event["ticket_key"],
-                "estimate": event["message"],
+                "estimate": event["estimate"],
             }),
         )
-    
+        self.estimates[event["username"]] = [event["estimate"],self.timer - datetime.now()]
+        
     async def start_timer(self,event):
+        self.estimates = {}
+        self.timer = datetime.now()
         if self.scope['user']==self.pokerboard_manager and self.session[0].status==Session.ONGOING:
             self.session[0].time_started_at = datetime.now()
             self.session[0].save()
@@ -226,5 +250,4 @@ class TestConsumer(AsyncWebsocketConsumer):
             )
         else:
             await self.send(text_data=json.dumps({"error":"Cant start time."}))
-    
     

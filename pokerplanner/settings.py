@@ -30,8 +30,7 @@ INSTALLED_APPS = [
     'session',
     'invite',
     'common',
-    'django_extensions',
-    'debug_toolbar'
+    'django_extensions'
 ]
 
 MIDDLEWARE = [
@@ -43,7 +42,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'pokerplanner.urls'

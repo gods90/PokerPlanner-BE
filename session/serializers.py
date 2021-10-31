@@ -28,7 +28,7 @@ class SessionSerializer(serializers.ModelSerializer):
 
 
 class MethodSerializer(serializers.Serializer):
-    method_name = serializers.ChoiceField(choices=["estimate", "start_game", "skip_ticket", "start_timer"])
+    method_name = serializers.ChoiceField(choices=["estimate", "start_game", "skip_ticket", "start_timer", "final_estimate"])
     method_value = serializers.DictField()
 
 
