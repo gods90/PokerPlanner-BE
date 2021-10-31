@@ -1,11 +1,14 @@
 from rest_framework import status, viewsets
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.contrib.auth import tokens
 
 from invite.models import Invite
 from invite.serializer import InviteCreateSerializer, InviteSerializer
 from pokerboard import constants
+import pokerboard
 from pokerboard.serializers import PokerboardUserGroupSerializer
 
 
@@ -18,8 +21,7 @@ class InviteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Invite.objects.filter(user_id=self.request.user.id, status=constants.PENDING)
-
+        return Invite.objects.filter(user_id=self.request.user.id, status = constants.PENDING)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':

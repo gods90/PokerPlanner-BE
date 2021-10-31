@@ -24,7 +24,7 @@ class Session(Timestamp):
         default=ONGOING,
         help_text="Session ongoing or ended",
     )
-    time_started_at = models.DateTimeField(auto_now=True)
+    time_started_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return f"{self.title} -> {self.pokerboard}"

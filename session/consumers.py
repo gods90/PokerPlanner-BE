@@ -1,11 +1,14 @@
-from channels.generic.websocket import AsyncJsonWebsocketConsumer, WebsocketConsumer
-from asgiref.sync import async_to_sync
+from collections import defaultdict
 import json
-from django.contrib.auth.models import AnonymousUser
-from django.db.models import manager
+import requests
+from channels.generic.websocket import AsyncWebsocketConsumer
+
 from django.db.models.query_utils import Q
+from django.contrib.auth.models import AnonymousUser
 from pokerboard import constants
-from rest_framework import serializers
+
+
+from datetime import datetime
 from pokerboard.models import Pokerboard, Ticket
 
 from session.models import Session
@@ -13,24 +16,28 @@ from session.serializers import MethodSerializer
 from session.utils import move_ticket_to_last
 from user.serializer.serializers import UserSerializer
 
-class TestConsumer(AsyncJsonWebsocketConsumer):
+from rest_framework.exceptions import ValidationError
+
+from rest_framework import serializers
+from pokerplanner import settings
+from session.utils import checkEstimateValue
+
+class TestConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
         """
         Runs when a request to make a connection is received.
         """
         session_id = self.scope['url_route']['kwargs']['session_id']
-        self.room_name = session_id
-        self.room_group_name = 'session_%s' % self.room_name
-        self.session = Session.objects.filter(id=session_id)
+        self.session = Session.objects.filter(id=session_id,status=Session.ONGOING)
 
-        #Session does not exist.
+        #Session does not exist or session is not ongoing.
         if not self.session.exists():
             await self.close()
             return
         
-        #User is anonymous or session is not ongoing
-        if type(self.scope["user"])==AnonymousUser or self.session.first().status != Session.ONGOING:
+        #User is anonymous 
+        if type(self.scope["user"])==AnonymousUser:
             await self.close()
             return
         
@@ -43,9 +50,19 @@ class TestConsumer(AsyncJsonWebsocketConsumer):
             await self.close()
             return
             
-        #Join room group
+        self.room_name = self.session.first().title
+        self.room_group_name = 'session_%s' % self.room_name
+        self.personal_group = 'user_%s' % self.scope['user'].id
+
+        #Join room group.
         await self.channel_layer.group_add(
             self.room_group_name,
+            self.channel_name
+        )
+
+        #Joining personal group.
+        await self.channel_layer.group_add(
+            self.personal_group,
             self.channel_name
         )
         
@@ -54,13 +71,21 @@ class TestConsumer(AsyncJsonWebsocketConsumer):
         setattr(self.channel_layer,self.room_group_name,all_members)
         
         await self.accept()
+        self.pokerboard_manager = pokerboard.first().manager
         
         # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'broadcast',
-                'message': f"{self.scope['user']} has joined the session."
+                'message': f"{self.scope['user']} has joined the session {self.room_name}"
+            }
+        )
+        
+        await self.channel_layer.group_send(
+            self.personal_group ,
+            {
+                'type': 'start_game',
             }
         )
         
@@ -100,11 +125,15 @@ class TestConsumer(AsyncJsonWebsocketConsumer):
         """
         all_members = getattr(self.channel_layer,self.room_group_name,[])
         serializer = UserSerializer(all_members,many=True)
-        return{
-            "type":event["type"],
-            "message":serializer.data
-        }
-    
+        # Send message to personal group
+        await self.channel_layer.group_send(
+            self.personal_group ,
+            {
+                'type': 'broadcast',
+                'message': serializer.data
+            }
+        )
+        
     async def skip_ticket(self,event):
         manager = self.session[0].pokerboard.manager
         ticket_id = event["message"]["ticket"]
@@ -119,22 +148,83 @@ class TestConsumer(AsyncJsonWebsocketConsumer):
             method_name = serializer.validated_data["method_name"]
             method_value = serializer.validated_data["method_value"]
             fn_name = getattr(self,method_name)
-            result = await fn_name({
+            await fn_name({
                 'type':method_name,
                 'message':method_value
             })
-            
-            # Send message to room group
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'broadcast',
-                    'message': result["message"]
-                }
-            )
         except serializers.ValidationError as e:
             await self.send(text_data=json.dumps({"error":"Something went wrong."}))
-                
-    # def send(self, text_data=None, bytes_data=None, close=False):
-    #     return super().send(text_data=text_data, bytes_data=bytes_data, close=close)
+        except json.decoder.JSONDecodeError as e:
+            await self.send(text_data=json.dumps({"error":"invalid json input"}))
+        
+    async def estimate(self, event):
+        """
+        Estimates tickets by user and manager and also update in jira.
+        """
+        session = Session.objects.get(id=self.scope['url_route']['kwargs']['session_id'])
+        deck_type = session.pokerboard.estimation_type
+        try:
+            ticket_key = event["message"]["ticket_key"]
+            estimate = event["message"]["estimate"]
+            if not checkEstimateValue(deck_type,estimate):
+                raise ValidationError("Invalid estimate value")
+            if self.scope['user'] == self.pokerboard_manager:
+                jira = settings.JIRA
+                set_estimate = {'customfield_10016':estimate}
+                jira.update_issue_field(ticket_key, set_estimate)     
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'broadcast',
+                        'message': f"Final Estimate on ticket {ticket_key} is {estimate}"
+                    }
+                )
+            else:
+                manager_room_name = 'user_%s' % self.pokerboard_manager.id
+                await self.channel_layer.group_send(
+                    manager_room_name,
+                    {
+                        'type': 'message.manager',
+                        "username": self.scope['user'].email,
+                        'ticket_key':ticket_key,
+                        'message': estimate
+                    }
+                )
+        except ValidationError as e:
+            await self.send(text_data=json.dumps({"error":f'{e}'}))
+        except KeyError as e:
+            await self.send(text_data=json.dumps({"error":f'{e}'}))
+        except requests.exceptions.HTTPError as e:
+            await self.send(text_data=json.dumps({"error":f'{e}'}))        
 
+    async def message_manager(self, event):
+        """
+        Send user estimate to manager
+        """
+        await self.send(
+            text_data=json.dumps
+            ({
+                "username": event["username"],
+                "ticket": event["ticket_key"],
+                "estimate": event["message"],
+            }),
+        )
+    
+    async def start_timer(self,event):
+        if self.scope['user']==self.pokerboard_manager and self.session[0].status==Session.ONGOING:
+            self.session[0].time_started_at = datetime.now()
+            self.session[0].save()
+            
+            # Send message to personal group
+            await self.channel_layer.group_send(
+                self.personal_group ,
+                {
+                    'type': 'broadcast',
+                    'message': json.dumps(self.session[0].time_started_at.strftime("%H:%M:%S"))
+
+                }
+            )
+        else:
+            await self.send(text_data=json.dumps({"error":"Cant start time."}))
+    
+    
