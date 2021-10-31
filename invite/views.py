@@ -58,4 +58,3 @@ class InviteViewSet(viewsets.ModelViewSet):
         invite.save()
         serializer = InviteSerializer(instance=invite)
         return Response(data=serializer.data)
-

@@ -42,7 +42,7 @@ class PokerboardMembersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PokerboardUserGroup
-        fields = "__all__"
+        fields = ['pokerboard', 'user', 'role']
         extra_kwargs = {
             'pokerboard': {'read_only': True},
             'user': {'read_only': True},

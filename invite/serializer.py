@@ -56,6 +56,8 @@ class InviteCreateSerializer(serializers.Serializer):
     )
     
     def create(self, attrs):
+        # import pdb
+        # pdb.set_trace()
         pokerboard = attrs['pokerboard']
         users = []
         if 'group_id' in attrs.keys():
@@ -92,22 +94,19 @@ class InviteCreateSerializer(serializers.Serializer):
                         'Invite already sent!'
                     )
 
+        defaults = {
+            'group_id' : attrs.get('group_id', None),
+            'user_role' : attrs.get('user_role', constants.PLAYER)
+        }
+        if defaults['group_id'] is not None:
+            defaults['group_id'] = defaults['group_id'].id
+            
         for user in users:
-            try:
-                invite = Invite.objects.get(pokerboard_id = pokerboard.id, user_id = user.id)
-                invite.status = constants.PENDING
-                if 'user_role' in attrs.keys():
-                    invite.user_role = attrs['user_role']
-                invite.save()
-            except Invite.DoesNotExist:
-                new_data = {
-                    'pokerboard_id' : pokerboard.id,
-                    'user_id' : user.id,
-                }
-                if 'group_id' in attrs.keys():
-                    new_data['group_id'] = attrs['group_id'].id
-                if 'user_role' in attrs.keys():
-                    new_data['user_role'] = attrs['user_role']
-                invite = Invite.objects.create(**new_data)
+                invite, created = Invite.objects.get_or_create(
+                    pokerboard_id = pokerboard.id, user_id = user.id, defaults=defaults
+                )
+                if not created:
+                    invite.status = constants.PENDING
+                    invite.save()
         return invite
 

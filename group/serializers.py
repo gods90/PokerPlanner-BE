@@ -68,7 +68,7 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
         else:
             if self.instance.users.filter(email=attrs).exists():
                 raise serializers.ValidationError('Already a member!')
-        return super().validate(attrs)
+        return attrs
 
     def update(self, instance, validated_data):
         """
@@ -102,6 +102,7 @@ class GroupMemberDeleteSerializer(serializers.Serializer):
             )
         if not group.users.filter(email=attrs).exists():
             raise serializers.ValidationError('User not part of group.')
+        return attrs
 
 
 class GetGroupSerializer(serializers.ModelSerializer):
