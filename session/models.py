@@ -28,6 +28,7 @@ class Session(Timestamp):
 
     def __str__(self):
         return f"{self.title} -> {self.pokerboard}"
+    
 
 
 class UserEstimate(Timestamp):

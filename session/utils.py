@@ -1,10 +1,12 @@
 from pokerboard.models import Ticket
+from django.db.models import Max
 
-
-def move_ticket_to_last(ticket_id,pokerboard):
-    all_non_estimated_tickets = Ticket.objects.filter(pokerboard__id=pokerboard,status=Ticket.NOTESTIMATED).order_by("order")
-    print(all_non_estimated_tickets)
-
+def move_ticket_to_last(pokerboard, pk):
+    highest_order_of_all_non_estimated_tickets = Ticket.objects.filter(pokerboard__id=pokerboard,status=Ticket.NOTESTIMATED).aggregate(Max('order'))
+    ticket = Ticket.objects.get(id=pk)
+    ticket.order = highest_order_of_all_non_estimated_tickets["order__max"]+1
+    ticket.save()
+    
 def checkEstimateValue(deck_type, estimateValue):
     if not isinstance(estimateValue,int):
         return False

@@ -1,14 +1,16 @@
 from collections import defaultdict
 import json
+from django.db.models import manager
 import requests
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from django.db.models.query_utils import Q
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, update_last_login
 from pokerboard import constants
 
 
 from datetime import datetime
+import pokerboard
 from pokerboard.models import Pokerboard, Ticket
 
 from session.models import Session
@@ -135,10 +137,10 @@ class TestConsumer(AsyncWebsocketConsumer):
         )
         
     async def skip_ticket(self,event):
-        manager = self.session[0].pokerboard.manager
+        pokerboard = self.session[0].pokerboard
         ticket_id = event["message"]["ticket"]
-        if self.scope["user"] == manager and Ticket.objects.get(id=ticket_id).status==Ticket.NOTESTIMATED:
-            move_ticket_to_last(ticket_id,manager)
+        if self.scope["user"] == pokerboard.manager and Ticket.objects.get(id=ticket_id).status==Ticket.NOTESTIMATED:
+            move_ticket_to_last(pokerboard.id, ticket_id)
     
     async def receive(self, text_data=None, bytes_data=None):
         try:
@@ -227,4 +229,5 @@ class TestConsumer(AsyncWebsocketConsumer):
         else:
             await self.send(text_data=json.dumps({"error":"Cant start time."}))
     
+
     

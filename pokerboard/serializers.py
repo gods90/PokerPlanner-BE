@@ -63,7 +63,7 @@ class PokerboardGroupSerializer(serializers.ModelSerializer):
 class PokerboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pokerboard
-        fields = ['id', 'title', 'game_duration', 'description', 'manager']
+        fields = ['id', 'title', 'game_duration', 'description', 'manager', 'estimation_type']
 
 
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
