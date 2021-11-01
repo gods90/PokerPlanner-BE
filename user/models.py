@@ -24,8 +24,15 @@ class User(AbstractUser, Timestamp):
     def __str__(self):
         return self.email
     
+    def full_name(self):
+        """
+        Get fullname of the user
+        """
+        return self.first_name + self.last_name
+    
     def save_base(self, raw=False, force_insert=False,
                  force_update=False, using=None, update_fields=None):
         self.set_password(self.password)
         return super().save_base(raw=raw, force_insert=force_insert,
                                 force_update=force_update, using=using, update_fields=update_fields)
+                                

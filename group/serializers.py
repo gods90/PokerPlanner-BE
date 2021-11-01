@@ -13,18 +13,13 @@ class GroupSerializer(serializers.ModelSerializer):
     """
     users = GetUserSerializer(many=True, required=False)
     name = serializers.CharField()
+    creater_name = serializers.CharField(
+        read_only=True, source='created_by.full_name'
+    )
 
     class Meta:
         model = Group
-        fields = ['id', 'created_by', 'name', 'users']
-
-    def to_representation(self, instance):
-        """
-        Replacing group_admin_id with his/her fullname.
-        """
-        repr = super().to_representation(instance)
-        repr["creator_name"] = f"{instance.created_by.first_name} {instance.created_by.last_name}"
-        return repr
+        fields = ['id', 'created_by', 'name', 'users', 'creater_name']
 
     def create(self, validated_data):
         """
@@ -78,6 +73,7 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Email is required.")
         user = User.objects.get(email=validated_data['email'])
         instance.users.add(user)
+        
         return super().update(instance, validated_data)
 
 
