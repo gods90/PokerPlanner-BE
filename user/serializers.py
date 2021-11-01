@@ -27,16 +27,6 @@ class UserSerializer(serializers.ModelSerializer):
         res = Group.objects.filter(users__in=[user])
         serializer = GetGroupSerializer(res, many=True)
         return serializer.data
-
-    def create(self, validated_data):
-        """
-        Overriding create method to hash password and then save.
-        """
-        password = validated_data['password']
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
     
     def validate_password(self, password):
         """
