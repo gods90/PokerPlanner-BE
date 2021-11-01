@@ -38,20 +38,26 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
     Serializer to validate user which is to be added in the group.
     """
     email = serializers.EmailField()
+    first_name = serializers.SerializerMethodField()
+    last_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Group
-        fields = ['id', 'name', 'email']
+        fields = ['id', 'name', 'email', 'first_name', 'last_name']
 
-    def to_representation(self, instance):
+    def get_first_name(self, instance):
         """
-        Adding fullname of user recently added.
+        Return first_name of user most recently added
         """
-        repr = super().to_representation(instance)
         user = User.objects.get(email=instance.email)
-        repr["first_name"] = user.first_name
-        repr["last_name"] = user.last_name
-        return repr
+        return user.first_name
+    
+    def get_last_name(self, instance):
+        """
+        Return last_name of user most recently added
+        """
+        user = User.objects.get(email=instance.email)
+        return user.last_name
 
     def validate_email(self, attrs):
         """
@@ -73,7 +79,6 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Email is required.")
         user = User.objects.get(email=validated_data['email'])
         instance.users.add(user)
-        
         return super().update(instance, validated_data)
 
 
