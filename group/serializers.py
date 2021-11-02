@@ -96,7 +96,7 @@ class GroupMemberDeleteSerializer(serializers.Serializer):
         if not user.exists():
             raise serializers.ValidationError('Invalid user!')
 
-        group = Group.objects.get(id=self.context['group_id'])
+        group = self.context['group_id']
         if group.created_by == user[0]:
             raise serializers.ValidationError(
                 "Cannot delete creator of group."

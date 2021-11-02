@@ -24,6 +24,7 @@ class TicketSerializer(serializers.ModelSerializer):
 class TicketsSerializer(serializers.ListSerializer):
     """
     Serializer to validate array of jira-id provided by user.
+    Example - ['MP-1', 'MP-2']
     """
     child = serializers.CharField()
 

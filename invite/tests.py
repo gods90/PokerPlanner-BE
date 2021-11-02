@@ -12,7 +12,6 @@ from pokerboard import constants
 from user.models import User
 from pokerboard.models import Pokerboard
 
-# Create your tests here.
 
 
 class InviteTestCases(APITestCase):

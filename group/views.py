@@ -1,5 +1,6 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -48,15 +49,15 @@ class GroupViewSet(viewsets.ModelViewSet):
         Required : email
         """
         group_id = self.kwargs['pk']
+        group = get_object_or_404(Group, id=group_id)
         context = {
-            "group_id": group_id
+            "group": group
         }
         email = self.request.query_params.get('email')
         serializer = GroupMemberDeleteSerializer(
             data={"email": email}, context=context
         )
         serializer.is_valid(raise_exception=True)
-        group = Group.objects.get(id=group_id)
         user = User.objects.get(email=email)
         group.users.remove(user)
         return Response(data={'msg': 'User removed from the group.'})
