@@ -58,7 +58,7 @@ class InviteCreateSerializer(serializers.Serializer):
                 users.append(user)
             except User.DoesNotExist as e:
                 pokerboard_manager_email = pokerboard.manager.email
-                send_invite_email_task.delay(pokerboard_manager_email, [attrs['email']])
+                send_invite_email_task.delay(pokerboard_manager_email, attrs['email'])
                 raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
         else:
             raise serializers.ValidationError('Provide group_id/email!')
