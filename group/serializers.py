@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from group.models import Group
-
 from user.models import User
 from user.serializers import GetUserSerializer
 
@@ -96,7 +95,7 @@ class GroupMemberDeleteSerializer(serializers.Serializer):
         if not user.exists():
             raise serializers.ValidationError('Invalid user!')
 
-        group = self.context['group_id']
+        group = self.context['group']
         if group.created_by == user[0]:
             raise serializers.ValidationError(
                 "Cannot delete creator of group."
