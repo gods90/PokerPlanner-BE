@@ -62,7 +62,7 @@ TEMPLATES = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'pokerplanner.authentication.CustomTokenAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10
@@ -111,6 +111,8 @@ STATIC_URL = '/static/'
 AUTH_USER_MODEL = "user.User"
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+TOKEN_EXPIRATION_TIME_IN_HOURS = os.environ['TOKEN_EXPIRATION_TIME_IN_HOURS']
 
 JIRA = Jira(
     url=os.environ['JIRA_URL'],
