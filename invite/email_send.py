@@ -5,6 +5,9 @@ from django.conf import settings
 
 
 def send_invite_mail(manager_email, recipient):
+    """
+    Function to send invite to pokerboard email to non-existing user.
+    """
     context = {
         'manager_email': manager_email
     }
