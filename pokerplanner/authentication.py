@@ -9,6 +9,9 @@ from datetime import timedelta
 
 
 class CustomTokenAuthentication(TokenAuthentication):
+    """
+    Custom Token Auth to expire token after stipulated time.
+    """
     model = Token
 
     def authenticate_credentials(self, key):

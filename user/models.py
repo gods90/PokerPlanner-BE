@@ -32,7 +32,10 @@ class User(AbstractUser, Timestamp):
     
     def save_base(self, raw=False, force_insert=False,
                  force_update=False, using=None, update_fields=None):
+        """
+        Overriding save_base for password hashing.
+        """
         self.set_password(self.password)
         return super().save_base(raw=raw, force_insert=force_insert,
-                                force_update=force_update, using=using, update_fields=update_fields)
-                                
+                                 force_update=force_update, using=using,
+                                 update_fields=update_fields)

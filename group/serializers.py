@@ -85,24 +85,18 @@ class GroupMemberDeleteSerializer(serializers.Serializer):
     """
     Serializer to remove user from a group.
     """
-    email = serializers.EmailField()
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
-    def validate_email(self, attrs):
+    def validate_user(self, user):
         """
-        Validating email of user which is to be removed.
+        Validating user which is to be removed.
         """
-        user = User.objects.filter(email=attrs)
-        if not user.exists():
-            raise serializers.ValidationError('Invalid user!')
-
         group = self.context['group']
-        if group.created_by == user[0]:
+        if group.created_by == user:
             raise serializers.ValidationError(
                 "Cannot delete creator of group."
             )
-        if not group.users.filter(email=attrs).exists():
-            raise serializers.ValidationError('User not part of group.')
-        return attrs
+        return user
 
 
 class GetGroupSerializer(serializers.ModelSerializer):

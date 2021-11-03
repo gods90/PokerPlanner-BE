@@ -94,7 +94,7 @@ class InviteCreateSerializer(serializers.Serializer):
                         Invite.objects.select_related('user').
                             filter(pokerboard_id=pokerboard.id, user__in=users)
         )
-
+        
         for softdeleted_invite in softdeleted_invites:
             softdeleted_invite.group = group_id
             softdeleted_invite.user_role = user_role
@@ -105,9 +105,12 @@ class InviteCreateSerializer(serializers.Serializer):
         Invite.objects.bulk_create(
             [
                 Invite(
-                    pokerboard_id=pokerboard.id, user=user, group=group_id, user_role=user_role
+                    pokerboard_id=pokerboard.id, user=user,
+                    group=group_id, user_role=user_role
                 ) for user in remaining_users
             ]
         )
-        Invite.objects.bulk_update(softdeleted_invites, ['group', 'user_role', 'status'])
+        Invite.objects.bulk_update(
+            softdeleted_invites, ['group', 'user_role', 'status']
+        )
         return attrs

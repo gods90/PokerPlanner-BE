@@ -14,3 +14,14 @@ class GroupCustomPermissions(BasePermission):
             group = get_object_or_404(Group, pk=view.kwargs['pk'])
             return request.user == group.created_by
         return super().has_permission(request, view)
+
+
+class GroupRemoveMemberCustomPermissions(BasePermission):
+    """
+    Permission class to allow only group admin to remove members
+    """
+    def has_permission(self, request, view):
+        if request.method in ['DELETE']:
+            group = get_object_or_404(Group, id=view.kwargs['group_id'])
+            return request.user == group.created_by
+        return super().has_permission(request, view)
