@@ -4,6 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from django.db.models.query_utils import Q
 from django.contrib.auth.models import AnonymousUser
+from django.utils import timezone
 from pokerboard import constants
 
 
@@ -54,19 +55,11 @@ class TestConsumer(AsyncWebsocketConsumer):
         self.room_group_name = 'session_%s' % self.room_name
         self.personal_group = 'user_%s' % self.scope['user'].id
 
-        #Join room group.
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-
-        #Joining personal group.
-        await self.channel_layer.group_add(
-            self.personal_group,
-            self.channel_name
-        )
-        
         all_members = getattr(self.channel_layer,self.room_group_name,[])
+        if self.scope['user'] in all_members:
+            await self.accept()
+            self.pokerboard_manager = pokerboard.first().manager
+            return
         all_members.append(self.scope['user'])
         setattr(self.channel_layer,self.room_group_name,all_members)
         
@@ -78,8 +71,24 @@ class TestConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'broadcast',
-                'message': f"{self.scope['user']} has joined the session {self.room_name}"
+                'data': {
+                    "context":"User Joined",
+                    "user":UserSerializer(self.scope['user']).data,
+                    "message":f"{self.scope['user']} has joined {self.room_name}"
+                }
             }
+        )
+        
+        #Join room group.
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        #Joining personal group.
+        await self.channel_layer.group_add(
+            self.personal_group,
+            self.channel_name
         )
         
         await self.channel_layer.group_send(
@@ -108,7 +117,11 @@ class TestConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             {
                 'type': 'broadcast',
-                'message': f"{self.scope['user']} has left the session."
+                'data': {
+                    "context":"User Left",
+                    "user":UserSerializer(self.scope['user']).data,
+                    "message":f"{self.scope['user']} has left the session."
+                }
             }
         )
     
@@ -116,8 +129,8 @@ class TestConsumer(AsyncWebsocketConsumer):
         """
         Runs to send the message to all the user.
         """
-        message = event["message"]
-        await self.send(text_data=json.dumps(message))
+        data = event["data"]
+        await self.send(text_data=json.dumps(data))
     
     async def start_game(self, event):
         """
@@ -130,9 +143,13 @@ class TestConsumer(AsyncWebsocketConsumer):
             self.personal_group ,
             {
                 'type': 'broadcast',
-                'message': serializer.data
+                'data': {
+                    "context":"Game Info",
+                    "users":serializer.data,
+                    "startTime":json.dumps((str(self.session[0].time_started_at)))
+                }
             }
-        )
+        )   
         
     async def skip_ticket(self,event):
         manager = self.session[0].pokerboard.manager
@@ -197,7 +214,7 @@ class TestConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'broadcast',
-                    'message': f"{self.scope['user'].email} has estimated {ticket_key}"
+                    'data': f"{self.scope['user'].email} has estimated {ticket_key}"
                 }
             )
 
@@ -230,24 +247,25 @@ class TestConsumer(AsyncWebsocketConsumer):
                 "estimate": event["estimate"],
             }),
         )
-        self.estimates[event["username"]] = [event["estimate"],self.timer - datetime.now()]
+        self.estimates[event["username"]] = [event["estimate"], self.timer - datetime.now()]
         
     async def start_timer(self,event):
         self.estimates = {}
         self.timer = datetime.now()
-        if self.scope['user']==self.pokerboard_manager and self.session[0].status==Session.ONGOING:
-            self.session[0].time_started_at = datetime.now()
-            self.session[0].save()
-            
+        if self.scope['user'] == self.pokerboard_manager and self.session[0].status == Session.ONGOING:
+            self.session.first().time_started_at = timezone.now()
+            self.session.first().save()
             # Send message to personal group
             await self.channel_layer.group_send(
-                self.personal_group ,
+                self.room_group_name ,
                 {
                     'type': 'broadcast',
-                    'message': json.dumps(self.session[0].time_started_at.strftime("%H:%M:%S"))
-
+                    'data': {
+                        'context':'Timer Started',
+                        'startTime': json.dumps(self.session[0].time_started_at.strftime("%H:%M:%S"))
+                    }
                 }
             )
         else:
             await self.send(text_data=json.dumps({"error":"Cant start time."}))
-    
+

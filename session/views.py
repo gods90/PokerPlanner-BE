@@ -22,8 +22,8 @@ class SessionViewSet(viewsets.ModelViewSet):
         """
         To get the active session of the pokerboard.
         """
-        pokerboard_id = self.kwargs["pk"]
-        active_session = get_object_or_404(Session, pokerboard_id=pokerboard_id,status=Session.ONGOING)
+        session_id = self.kwargs["pk"]
+        active_session = get_object_or_404(Session, id=session_id,status=Session.ONGOING)
         return active_session
 
 
