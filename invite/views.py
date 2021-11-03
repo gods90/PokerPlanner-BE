@@ -53,7 +53,7 @@ class InviteViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         invite = self.get_object()
         if invite.status != constants.PENDING:
-            return Response(data={'msg' : 'Already accepted'}, status=status.HTTP_400_BAD_REQUEST) 
+            return Response(data={'msg':'Already accepted'}, status=status.HTTP_400_BAD_REQUEST) 
         invite.status = constants.DECLINED
         invite.save()
         serializer = InviteSerializer(instance=invite)

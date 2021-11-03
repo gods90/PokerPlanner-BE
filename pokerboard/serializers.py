@@ -117,7 +117,7 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
         # Adding jql
         if 'jql' in data.keys():
-            if(len(myJql) != 0):
+            if len(myJql) != 0:
                 myJql += " OR "
             myJql += data['jql']
 
@@ -147,9 +147,9 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
         Imported tickets from JIRA and created pokerboard only if 
         atleast one valid ticket was found.
         """
-        new_pokerboard = {key: val for key, val in self.data.items() if key not in [
+        new_pokerboard = {key: val for key, val in validated_data.items() if key not in [
             'sprint_id', 'tickets', 'jql']}
-        ticket_responses = new_pokerboard.pop('ticket_responses')
+        ticket_responses = self.data['ticket_responses']
 
         valid_tickets = 0
         for ticket_response in ticket_responses:
@@ -158,11 +158,8 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
         if valid_tickets == 0:
             raise serializers.ValidationError('Invalid tickets!')
 
-        manager = User.objects.get(id=new_pokerboard["manager"])
-        new_pokerboard["manager"] = manager
-        pokerboard = Pokerboard(**new_pokerboard)
-        pokerboard.save()
-
+        pokerboard = Pokerboard.objects.create(**new_pokerboard)
+        
         ticket_responses = [
             (
                 ticket_response

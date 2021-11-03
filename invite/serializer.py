@@ -17,19 +17,16 @@ class InviteSerializer(serializers.ModelSerializer):
     """
     user_role = serializers.CharField(source='get_user_role_display')
     status = serializers.CharField(source='get_status_display')
+    pokerboard_title = serializers.CharField(source='pokerboard')
+
     class Meta:
         model = Invite
-        fields = ['id', 'status', 'pokerboard', 'user', 'group', 'user_role']
+        fields = ['id', 'status', 'pokerboard', 'user', 'group', 'user_role', 'pokerboard_title']
         extra_kwargs = {
             'pokerboard': {'read_only': True},
             'user': {'read_only': True},
             'group': {'read_only': True},
         }
-
-    def to_representation(self, instance):
-        rep = super(InviteSerializer, self).to_representation(instance)
-        rep['pokerboard_title'] = instance.pokerboard.title
-        return rep
     
     def validate(self, attrs):
         invite = attrs['invite_id']
@@ -56,8 +53,6 @@ class InviteCreateSerializer(serializers.Serializer):
     )
     
     def create(self, attrs):
-        # import pdb
-        # pdb.set_trace()
         pokerboard = attrs['pokerboard']
         users = []
         if 'group_id' in attrs.keys():
@@ -65,10 +60,8 @@ class InviteCreateSerializer(serializers.Serializer):
             users = group.users.all()
 
         elif 'email' in attrs.keys():
-            try:
-                user = User.objects.get(email=attrs['email'])
-                users.append(user)
-            except User.DoesNotExist as e:
+            users = User.objects.filter(email=attrs['email'])
+            if not users.exists():
                 send_mail(to_emails=[attrs['email']])
                 raise serializers.ValidationError(
                     "Email to signup in pokerplanner has been sent.Please check your email."
@@ -93,20 +86,28 @@ class InviteCreateSerializer(serializers.Serializer):
                     raise serializers.ValidationError(
                         'Invite already sent!'
                     )
+                    
+        group_id = attrs.get('group_id', None)
+        user_role = attrs.get('user_role', constants.PLAYER)
+        users_invited = []
+        softdeleted_invites = (
+                        Invite.objects.select_related('user').
+                            filter(pokerboard_id=pokerboard.id, user__in=users)
+        )
 
-        defaults = {
-            'group_id' : attrs.get('group_id', None),
-            'user_role' : attrs.get('user_role', constants.PLAYER)
-        }
-        if defaults['group_id'] is not None:
-            defaults['group_id'] = defaults['group_id'].id
+        for softdeleted_invite in softdeleted_invites:
+            softdeleted_invite.group = group_id
+            softdeleted_invite.user_role = user_role
+            softdeleted_invite.status = constants.PENDING
+            users_invited.append(softdeleted_invite.user.id)
             
-        for user in users:
-                invite, created = Invite.objects.get_or_create(
-                    pokerboard_id = pokerboard.id, user_id = user.id, defaults=defaults
-                )
-                if not created:
-                    invite.status = constants.PENDING
-                    invite.save()
-        return invite
-
+        remaining_users = users.exclude(id__in=users_invited)
+        Invite.objects.bulk_create(
+            [
+                Invite(
+                    pokerboard_id=pokerboard.id, user=user, group=group_id, user_role=user_role
+                ) for user in remaining_users
+            ]
+        )
+        Invite.objects.bulk_update(softdeleted_invites, ['group', 'user_role', 'status'])
+        return attrs

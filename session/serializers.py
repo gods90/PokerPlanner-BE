@@ -9,13 +9,13 @@ class SessionSerializer(serializers.ModelSerializer):
     """
     Serializer for session
     """
-    status = serializers.CharField(source='get_status_display')
+    status = serializers.CharField(source='get_status_display', read_only=True)
     pokerboard = serializers.PrimaryKeyRelatedField(
         queryset=Pokerboard.objects.all()
     )
     class Meta:
         model = Session
-        fields = '__all__'
+        fields = ['id', 'pokerboard', 'status', 'title']
     
     def validate_pokerboard(self, attrs):
         """
