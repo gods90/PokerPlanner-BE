@@ -17,7 +17,3 @@ urlpatterns = [
     path('api/docs/', schema_view),
     path('session/', include('session.urls'))
 ]
-
-if settings.DEBUG:
-    import debug_toolbar
-    urlpatterns+= path('__debug__/', include(debug_toolbar.urls)),

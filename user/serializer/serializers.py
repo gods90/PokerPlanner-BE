@@ -27,8 +27,6 @@ class UserSerializer(serializers.ModelSerializer):
         """
         Overriding create method to hash password and then save.
         """
-        import pdb
-        pdb.set_trace()
         password = validated_data['password']
         user = User(**validated_data)
         user.set_password(password)
