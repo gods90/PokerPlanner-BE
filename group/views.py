@@ -45,10 +45,6 @@ class GroupMemberDeleteViewSet(viewsets.GenericViewSet, mixins.DestroyModelMixin
     def get_queryset(self):
         group = get_object_or_404(Group, id=self.kwargs['group_id'])
         return group.users.all()
-    
-    def get_object(self):
-        user = get_object_or_404(self.get_queryset(), id=self.kwargs['pk'])
-        return user
 
     def destroy(self, request, *args, **kwargs):
         group = (Group.objects
