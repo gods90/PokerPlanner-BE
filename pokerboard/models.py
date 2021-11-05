@@ -93,4 +93,3 @@ class PokerboardUserGroup(Timestamp):
         if self.user:
             return f'{self.pokerboard} -> {self.user}'
         return f'{self.pokerboard} -> {self.group}'
-

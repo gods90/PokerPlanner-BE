@@ -2,7 +2,6 @@ import requests
 
 from rest_framework import serializers, status
 
-from group.models import Group
 
 from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 
@@ -16,6 +15,7 @@ class TicketSerializer(serializers.ModelSerializer):
     Serializer for tickets stored in database.
     Sending response, update tickets etc.
     """
+
     class Meta:
         model = Ticket
         fields = ['session', 'ticket_id', 'order', 'estimation_date', 'status']
@@ -30,6 +30,10 @@ class TicketsSerializer(serializers.ListSerializer):
 
 
 class PokerboardUserGroupSerializer(serializers.ModelSerializer):
+    """
+    Pokerboard user group serializer for adding new user in a pokerboard 
+    """
+
     class Meta:
         model = PokerboardUserGroup
         fields = ['id', 'user', 'group', 'role', 'pokerboard']
@@ -55,22 +59,17 @@ class PokerboardGroupSerializer(serializers.ModelSerializer):
     """
     Pokerboard Group Serializer
     """
+
     class Meta:
         model = PokerboardUserGroup
         fields = ['group']
-
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        group = Group.objects.get(id=rep['group'])
-        rep['group'] = group.name
-        rep['group_id'] = group.id
-        return rep
 
 
 class PokerboardSerializer(serializers.ModelSerializer):
     """
     Pokerboard serializer
     """
+
     class Meta:
         model = Pokerboard
         fields = ['id', 'title', 'game_duration', 'description', 'manager']
@@ -90,7 +89,8 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pokerboard
-        fields = '__all__'
+        fields = ['id', 'manager', 'ticket_responses', 'title', 
+                                'description', 'game_duration' ]
 
     def get_ticket_responses(self, instance):
         jira = settings.JIRA

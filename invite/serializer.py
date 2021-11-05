@@ -44,7 +44,7 @@ class InviteCreateSerializer(serializers.Serializer):
     pokerboard = serializers.PrimaryKeyRelatedField(
         queryset=Pokerboard.objects.all()
     )
-    group_id = serializers.PrimaryKeyRelatedField(
+    group = serializers.PrimaryKeyRelatedField(
         queryset=Group.objects.all(), required=False
     )
     email = serializers.EmailField(required=False)
@@ -55,8 +55,8 @@ class InviteCreateSerializer(serializers.Serializer):
     def create(self, attrs):
         pokerboard = attrs['pokerboard']
         users = []
-        if 'group_id' in attrs.keys():
-            group = attrs['group_id']
+        if 'group' in attrs.keys():
+            group = attrs['group']
             users = group.users.all()
 
         elif 'email' in attrs.keys():
@@ -64,7 +64,7 @@ class InviteCreateSerializer(serializers.Serializer):
             if not users.exists():
                 send_mail(to_emails=[attrs['email']])
                 raise serializers.ValidationError(
-                    "Email to signup in pokerplanner has been sent.Please check your email."
+                    "Invitation to pokerboard will be sent."
                 )
         else:
             raise serializers.ValidationError('Provide group_id/email!')
@@ -87,7 +87,7 @@ class InviteCreateSerializer(serializers.Serializer):
                         'Invite already sent!'
                     )
                     
-        group_id = attrs.get('group_id', None)
+        group = attrs.get('group', None)
         user_role = attrs.get('user_role', constants.PLAYER)
         users_invited = []
         softdeleted_invites = (
@@ -96,7 +96,7 @@ class InviteCreateSerializer(serializers.Serializer):
         )
         
         for softdeleted_invite in softdeleted_invites:
-            softdeleted_invite.group = group_id
+            softdeleted_invite.group = group
             softdeleted_invite.user_role = user_role
             softdeleted_invite.status = constants.PENDING
             users_invited.append(softdeleted_invite.user.id)
@@ -106,7 +106,7 @@ class InviteCreateSerializer(serializers.Serializer):
             [
                 Invite(
                     pokerboard_id=pokerboard.id, user=user,
-                    group=group_id, user_role=user_role
+                    group=group, user_role=user_role
                 ) for user in remaining_users
             ]
         )

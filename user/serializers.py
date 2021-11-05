@@ -14,6 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
     Serializer for user
     """
     groups = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
@@ -36,10 +37,8 @@ class UserSerializer(serializers.ModelSerializer):
         and alphabets.
         """
         reg = "^(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{8,}$"
-
         # compiling regex
         pat = re.compile(reg)
-
         # searching regex
         mat = re.search(pat, password)
         if not mat:
@@ -54,6 +53,7 @@ class GetUserSerializer(serializers.ModelSerializer):
     """
     Serializer to get user details.
     """
+    
     class Meta:
         model = User
         fields = ['email', 'first_name', 'last_name', 'id']
@@ -64,7 +64,8 @@ class ChangePasswordSerializer(serializers.Serializer):
     Serializer for password change endpoint.
     """
     password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password])
+        write_only=True, required=True, validators=[validate_password]
+    )
     old_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
@@ -75,12 +76,11 @@ class ChangePasswordSerializer(serializers.Serializer):
         user = self.context['request'].user
         if not user.check_password(value):
             raise serializers.ValidationError(
-                {"old_password": "Old password is not correct"})
+                {"old_password": "Old password is not correct"}
+            )
         return value
 
     def update(self, instance, validated_data):
-
         instance.set_password(validated_data['password'])
         instance.save()
-
         return instance
