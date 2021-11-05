@@ -1,8 +1,11 @@
 from django.db import models
 
 from pokerboard.models import Pokerboard, Ticket
+
 from user.models import User
+
 from common.models import Timestamp
+
 
 class Session(Timestamp):
     """

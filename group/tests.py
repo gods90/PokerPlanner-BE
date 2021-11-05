@@ -32,7 +32,8 @@ class GroupTestCases(APITestCase):
         data = {
             'name': 'csk'
         }
-        response = self.client.post(self.GROUP_URL, data=json.dumps(data),
+        response = self.client.post(
+            self.GROUP_URL, data=json.dumps(data),
             content_type="application/json"
         )
         group = Group.objects.get(name="csk")
@@ -65,7 +66,8 @@ class GroupTestCases(APITestCase):
                 "This field may not be blank."
             ]
         }
-        response = self.client.post(self.GROUP_URL, data=json.dumps(data), 
+        response = self.client.post(
+            self.GROUP_URL, data=json.dumps(data), 
             content_type="application/json"
         )
         self.assertEqual(response.status_code, 400)

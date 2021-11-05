@@ -1,13 +1,19 @@
 from django.db import models
 
 from common.models import Timestamp
+
+# from common.models import Timestamp
 from group.models import Group
+
 from pokerboard import constants
+
 from user.models import User
 
 
 class Pokerboard(Timestamp):
-    """ Model to store Pokerboard settings."""
+    """
+    Model to store Pokerboard settings.
+    """
     SERIES = 1
     EVEN = 2
     ODD = 3
@@ -31,7 +37,9 @@ class Pokerboard(Timestamp):
     estimation_type = models.IntegerField(
         choices=ESTIMATION_CHOICES, default=SERIES, help_text='Estimation type.'
     )
-    game_duration = models.DurationField(null=False, help_text="Duration for game in pokerboard.")
+    game_duration = models.DurationField(
+        null=False, help_text="Duration for game in pokerboard."
+    )
     
     def __str__(self) -> str:
         return self.title
@@ -60,8 +68,8 @@ class Ticket(Timestamp):
         null=True, blank=True, help_text="Date on which ticket was estimated"
     )
     status = models.IntegerField(
-        choices=STATUS_CHOICES,
-        default=NOTESTIMATED,
+        choices=constants.STATUS_CHOICES,
+        default=constants.NOTESTIMATED,
         help_text='Default ticket status is not estimated.',
     )
 

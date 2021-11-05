@@ -16,7 +16,7 @@ from pokerplanner import settings
 from session.models import Session
 from session.serializers import MethodSerializer
 from session.utils import checkEstimateValue, set_user_estimates, move_ticket_to_last
-from user.serializer.serializers import UserSerializer
+from user.serializers import UserSerializer
 
 
 class TestConsumer(AsyncWebsocketConsumer):
@@ -65,7 +65,7 @@ class TestConsumer(AsyncWebsocketConsumer):
                 'data': {
                     'context':'User Joined',
                     'user':UserSerializer(self.scope['user']).data,
-                    'message':f'{self.scope['user']} has joined {self.room_name}'
+                    'message':f"{self.scope['user']} has joined {self.room_name}"
                 }
             }
         )
@@ -111,7 +111,7 @@ class TestConsumer(AsyncWebsocketConsumer):
                 'data': {
                     'context':'User Left',
                     'user':UserSerializer(self.scope['user']).data,
-                    'message':f'{self.scope['user']} has left the session.'
+                    'message':f"{self.scope['user']} has left the session."
                 }
             }
         )
