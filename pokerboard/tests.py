@@ -1,5 +1,4 @@
 import json
-from os import posix_fallocate
 
 from ddf import G
 from django.urls import reverse
@@ -7,7 +6,6 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from group.models import Group
-from pokerboard.admin import PokerboardAdmin
 from pokerboard.models import Pokerboard
 from user.models import User
 

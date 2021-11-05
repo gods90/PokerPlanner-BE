@@ -1,9 +1,12 @@
 from django.db import models
 
 from common.models import Timestamp
+
 from group.models import Group
+
 from pokerboard import constants
 from pokerboard.models import Pokerboard
+
 from user.models import User
 
 
@@ -19,7 +22,7 @@ class Invite(Timestamp):
         User, on_delete=models.CASCADE, help_text='User which is invited.'
     )
     user_role = models.IntegerField(
-        choices=constants.PLAYER,
+        choices=constants.ROLE_CHOICES,
         default=constants.PLAYER,
         help_text='Default user role is player.',
     )

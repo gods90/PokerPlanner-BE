@@ -2,7 +2,7 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 
 from user.models import User
-from user.serializer.serializers import (ChangePasswordSerializer,
+from user.serializers import (ChangePasswordSerializer,
                                          UserSerializer)
 
 
@@ -22,7 +22,7 @@ class ChangePasswordView(generics.UpdateAPIView):
     View to change user password
     """
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
 
     def get_object(self):

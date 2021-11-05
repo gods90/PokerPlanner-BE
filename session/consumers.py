@@ -13,7 +13,7 @@ from pokerboard.models import Pokerboard, Ticket
 
 from session.models import Session
 from session.serializers import MethodSerializer
-from user.serializer.serializers import UserSerializer
+from user.serializers import UserSerializer
 
 from rest_framework.exceptions import ValidationError
 
@@ -153,10 +153,13 @@ class TestConsumer(AsyncWebsocketConsumer):
         )   
         
     async def skip_ticket(self,event):
-        manager = self.session[0].pokerboard.manager
-        ticket_id = event["message"]["ticket"]
-        if self.scope["user"] == manager and Ticket.objects.get(id=ticket_id).status==Ticket.NOTESTIMATED:
-            move_ticket_to_last(ticket_id,manager)
+        """
+        Skip the current ticket to last.
+        """
+        pokerboard = self.session[0].pokerboard
+        ticket_id = event['message']['ticket']
+        if self.scope['user'] == pokerboard.manager and Ticket.objects.get(id=ticket_id).status==Ticket.NOTESTIMATED:
+            move_ticket_to_last(pokerboard.id, ticket_id)
     
     async def receive(self, text_data=None, bytes_data=None):
         # import pdb
@@ -209,7 +212,7 @@ class TestConsumer(AsyncWebsocketConsumer):
         deck_type = session.pokerboard.estimation_type
         try:
             ticket_key = event["message"]["ticket_key"]
-            estimate = event["message"]["estimate"]
+            estimate = int(event["message"]["estimate"])
             if not checkEstimateValue(deck_type,estimate):
                 raise ValidationError("Invalid estimate value")
             
