@@ -21,6 +21,7 @@ from rest_framework import serializers
 from pokerplanner import settings
 from session.utils import checkEstimateValue, set_user_estimates, move_ticket_to_last
 
+
 class TestConsumer(AsyncWebsocketConsumer):
     
     async def connect(self):
@@ -96,8 +97,8 @@ class TestConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'start_game',
             }
-        )
-        
+        )        
+
     async def disconnect(self, code):
         """
         Runs when connection is closed.
@@ -158,6 +159,8 @@ class TestConsumer(AsyncWebsocketConsumer):
             move_ticket_to_last(ticket_id,manager)
     
     async def receive(self, text_data=None, bytes_data=None):
+        # import pdb
+        # pdb.set_trace()
         try:
             data_json = json.loads(text_data)
             serializer = MethodSerializer(data=data_json)
@@ -181,7 +184,7 @@ class TestConsumer(AsyncWebsocketConsumer):
         session = Session.objects.get(id=self.scope['url_route']['kwargs']['session_id'])
         deck_type = session.pokerboard.estimation_type
         ticket_key = event["message"]["ticket_key"]
-        estimate = event["message"]["estimate"]
+        estimate = int(event["message"]["estimate"])
         if not checkEstimateValue(deck_type,estimate):
             raise ValidationError("Invalid estimate value")
         if self.scope['user'] == self.pokerboard_manager:
@@ -192,7 +195,7 @@ class TestConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'broadcast',
-                    'message': f"Final estimate of {ticket_key} is {estimate}"
+                    'data': f"Final estimate of {ticket_key} is {estimate}"
                 }
             )
             set_user_estimates(self.estimates, ticket_key)
@@ -253,8 +256,9 @@ class TestConsumer(AsyncWebsocketConsumer):
         self.estimates = {}
         self.timer = datetime.now()
         if self.scope['user'] == self.pokerboard_manager and self.session[0].status == Session.ONGOING:
-            self.session.first().time_started_at = timezone.now()
-            self.session.first().save()
+            session = self.session.first()
+            session.time_started_at = timezone.now()
+            session.save()
             # Send message to personal group
             await self.channel_layer.group_send(
                 self.room_group_name ,
@@ -267,5 +271,5 @@ class TestConsumer(AsyncWebsocketConsumer):
                 }
             )
         else:
-            await self.send(text_data=json.dumps({"error":"Cant start time."}))
+            await self.send(text_data=json.dumps({"error":"Can't start time."}))
 
