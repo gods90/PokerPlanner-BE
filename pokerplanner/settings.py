@@ -1,6 +1,7 @@
 import os
-from dotenv import load_dotenv
+
 from atlassian import Jira
+from dotenv import load_dotenv
 
 DEBUG = True
 
@@ -24,7 +25,10 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'user',
     'pokerboard',
-    'group'
+    'group',
+    'session',
+    'invite',
+    'common'
 ]
 
 MIDDLEWARE = [
@@ -58,8 +62,10 @@ TEMPLATES = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'pokerplanner.authentication.CustomTokenAuthentication',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
 }
 
 WSGI_APPLICATION = 'pokerplanner.wsgi.application'
@@ -106,8 +112,10 @@ AUTH_USER_MODEL = "user.User"
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+TOKEN_EXPIRATION_TIME_IN_HOURS = os.environ['TOKEN_EXPIRATION_TIME_IN_HOURS']
+
 JIRA = Jira(
-    url = os.environ['JIRA_URL'],
-    username = os.environ['JIRA_USERNAME'],
-    password = os.environ['JIRA_PASSWORD']
+    url=os.environ['JIRA_URL'],
+    username=os.environ['JIRA_USERNAME'],
+    password=os.environ['JIRA_PASSWORD']
 )
