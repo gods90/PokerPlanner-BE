@@ -35,7 +35,8 @@ class User(AbstractUser, Timestamp):
         """
         Overriding save_base for password hashing.
         """
-        self.set_password(self.password)
+        if not self.is_superuser:
+            self.set_password(self.password)
         return super().save_base(raw=raw, force_insert=force_insert,
                                  force_update=force_update, using=using,
                                  update_fields=update_fields)

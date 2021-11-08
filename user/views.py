@@ -14,10 +14,14 @@ class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView)
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
+    
+    def get_permissions(self):
+        if self.request.method in ['POST']:
+            return []
+        return [IsAuthenticated]
 
 
 class ChangePasswordView(generics.UpdateAPIView):

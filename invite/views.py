@@ -1,10 +1,10 @@
 from rest_framework import status, viewsets
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from invite.models import Invite
 from invite.serializer import InviteCreateSerializer, InviteSerializer
+from invite.permissions import PokerboardInviteCustomPermissions
 
 from pokerboard import constants
 from pokerboard.serializers import PokerboardUserGroupSerializer
@@ -15,7 +15,7 @@ class InviteViewSet(viewsets.ModelViewSet):
     Invite View for CRUD operations
     """
     queryset = Invite.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PokerboardInviteCustomPermissions]
 
     def get_queryset(self):
         return Invite.objects.filter(user_id=self.request.user.id, status = constants.PENDING)
@@ -24,14 +24,6 @@ class InviteViewSet(viewsets.ModelViewSet):
         if self.request.method == 'POST':
             return InviteCreateSerializer
         return InviteSerializer
-    
-    def create(self, request, *args, **kwargs):
-        serializer = InviteCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        pokerboard = serializer.validated_data['pokerboard']
-        if pokerboard.manager != request.user:
-            raise PermissionDenied()
-        return super().create(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         invite = self.get_object()
@@ -53,7 +45,7 @@ class InviteViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         invite = self.get_object()
         if invite.status != constants.PENDING:
-            return Response(data={'msg':'Already accepted'}, status=status.HTTP_400_BAD_REQUEST) 
+            return Response(data={'msg': 'Already accepted'}, status=status.HTTP_400_BAD_REQUEST)
         invite.status = constants.DECLINED
         invite.save()
         serializer = InviteSerializer(instance=invite)

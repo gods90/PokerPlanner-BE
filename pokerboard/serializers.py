@@ -89,8 +89,8 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pokerboard
-        fields = ['id', 'manager', 'ticket_responses', 'title', 
-                                'description', 'game_duration' ]
+        fields = ['id', 'manager', 'ticket_responses', 'title', 'description', 'game_duration', 'jql', 'tickets',
+                  'sprint_id']
 
     def get_ticket_responses(self, instance):
         jira = settings.JIRA

@@ -1,3 +1,4 @@
+from django.db.models.query_utils import Q
 from rest_framework import serializers
 
 from group.models import Group
@@ -51,8 +52,8 @@ class InviteCreateSerializer(serializers.Serializer):
     user_role = serializers.ChoiceField(
         choices=constants.ROLE_CHOICES, required=False
     )
-    
-    def create(self, attrs):
+
+    def validate(self, attrs):
         pokerboard = attrs['pokerboard']
         users = []
         if 'group' in attrs.keys():
@@ -69,30 +70,38 @@ class InviteCreateSerializer(serializers.Serializer):
         else:
             raise serializers.ValidationError('Provide group_id/email!')
 
-        for user in users:
-            invite = Invite.objects.filter(
-                user=user.id, pokerboard=pokerboard.id
-            )
-            if pokerboard.manager == user:
-                raise serializers.ValidationError(
-                    'Manager cannot be invited!'
-                )
-            if invite.exists():
-                if invite[0].status == constants.ACCEPTED:
-                    raise serializers.ValidationError(
-                        'Already part of pokerboard'
-                    )
-                elif invite[0].status == constants.PENDING:
-                    raise serializers.ValidationError(
-                        'Invite already sent!'
-                    )
+        accepted_invites = Invite.objects.filter(
+            pokerboard=pokerboard.id, status=constants.ACCEPTED, user__in=[user.id for user in users]
+        )
+        if accepted_invites.exists():
+            raise serializers.ValidationError('Already part of pokerboard')
+        
+        pending_invites = Invite.objects.filter(
+            pokerboard=pokerboard.id, status=constants.PENDING, user__in=[user.id for user in users]
+        )
+        if pending_invites.exists():
+            raise serializers.ValidationError('Invite already sent!')
+
+        if pokerboard.manager in users:
+            raise serializers.ValidationError('Manager cannot be invited!')
+                    
+        return attrs
+    
+    def create(self, attrs):
+        pokerboard = attrs['pokerboard']
+        users = []
+        if 'group' in attrs.keys():
+            group = attrs['group']
+            users = group.users.all()
+
+        elif 'email' in attrs.keys():
+            users = User.objects.filter(email=attrs['email'])
                     
         group = attrs.get('group', None)
         user_role = attrs.get('user_role', constants.PLAYER)
         users_invited = []
-        softdeleted_invites = (
-                        Invite.objects.select_related('user').
-                            filter(pokerboard_id=pokerboard.id, user__in=users)
+        softdeleted_invites = Invite.objects.select_related('user').filter(
+            pokerboard_id=pokerboard.id, user__in=users
         )
         
         for softdeleted_invite in softdeleted_invites:
@@ -114,3 +123,10 @@ class InviteCreateSerializer(serializers.Serializer):
             softdeleted_invites, ['group', 'user_role', 'status']
         )
         return attrs
+
+
+class PokerboardCheckInviteCreate(serializers.Serializer):
+    """
+    Serializer to validate pokerboard_id while creating invite.
+    """
+    pokerboard = serializers.PrimaryKeyRelatedField(queryset=Pokerboard.objects.all())
