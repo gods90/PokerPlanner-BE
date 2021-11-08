@@ -42,9 +42,6 @@ class InviteCreateSerializer(serializers.Serializer):
     """
     Serializer to create new invite to pokerboard
     """
-    pokerboard = serializers.PrimaryKeyRelatedField(
-        queryset=Pokerboard.objects.all()
-    )
     group = serializers.PrimaryKeyRelatedField(
         queryset=Group.objects.all(), required=False
     )
@@ -54,7 +51,9 @@ class InviteCreateSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
-        pokerboard = attrs['pokerboard']
+        pokerboard_id = self.context['view'].kwargs['pokerboard_id']
+        pokerboard = Pokerboard.objects.select_related('manager').get(id=pokerboard_id)
+        self.context['view'].kwargs['pokerboard'] = pokerboard
         users = []
         if 'group' in attrs.keys():
             group = attrs['group']
@@ -88,7 +87,7 @@ class InviteCreateSerializer(serializers.Serializer):
         return attrs
     
     def create(self, attrs):
-        pokerboard = attrs['pokerboard']
+        pokerboard = self.context['view'].kwargs['pokerboard']
         users = []
         if 'group' in attrs.keys():
             group = attrs['group']
@@ -123,10 +122,3 @@ class InviteCreateSerializer(serializers.Serializer):
             softdeleted_invites, ['group', 'user_role', 'status']
         )
         return attrs
-
-
-class PokerboardCheckInviteCreate(serializers.Serializer):
-    """
-    Serializer to validate pokerboard_id while creating invite.
-    """
-    pokerboard = serializers.PrimaryKeyRelatedField(queryset=Pokerboard.objects.all())

@@ -1,5 +1,6 @@
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import BasePermission
-from invite.serializer import PokerboardCheckInviteCreate
+from pokerboard.models import Pokerboard
 
 
 class PokerboardInviteCustomPermissions(BasePermission):
@@ -8,7 +9,9 @@ class PokerboardInviteCustomPermissions(BasePermission):
     """
     def has_permission(self, request, view):
         if request.method in ['POST']:
-            serializer = PokerboardCheckInviteCreate(data=view.request.data)
-            serializer.is_valid(raise_exception=True)
-            return request.user == serializer.validated_data['pokerboard'].manager
+            pokerboard = Pokerboard.objects.select_related('manager').filter(id=view.kwargs['pokerboard_id'])
+            if pokerboard.exists():
+                return request.user == pokerboard.first().manager
+            else:
+                raise NotFound('Invalid pokerboard!')
         return True
