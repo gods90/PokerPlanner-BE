@@ -148,24 +148,22 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
         Imported tickets from JIRA and created pokerboard only if 
         atleast one valid ticket was found.
         """
-        new_pokerboard = {key: val for key, val in validated_data.items() if key not in [
-            'sprint_id', 'tickets', 'jql']}
+        validated_data.pop('sprint_id', None)
+        validated_data.pop('tickets', None)
+        validated_data.pop('jql', None)
         ticket_responses = self.data['ticket_responses']
 
-        valid_tickets = 0
-        for ticket_response in ticket_responses:
-            valid_tickets += ticket_response['status_code'] == status.HTTP_200_OK
-
-        if valid_tickets == 0:
-            raise serializers.ValidationError('Invalid tickets!')
-
-        pokerboard = Pokerboard.objects.create(**new_pokerboard)
-        
         ticket_responses = [
             (
                 ticket_response
             ) for ticket_response in ticket_responses if ticket_response['status_code'] == 200
         ]
+
+        if len(ticket_responses) == 0:
+            raise serializers.ValidationError('Invalid tickets!')
+
+        pokerboard = Pokerboard.objects.create(**validated_data)
+        
 
         Ticket.objects.bulk_create(
             [
