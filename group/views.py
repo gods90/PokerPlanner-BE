@@ -47,9 +47,7 @@ class GroupMemberDeleteViewSet(viewsets.GenericViewSet, mixins.DestroyModelMixin
         return group.users.all()
 
     def destroy(self, request, *args, **kwargs):
-        group = (Group.objects
-                        .select_related('created_by')
-                        .get(id=self.kwargs['group_id']))
+        group = Group.objects.select_related('created_by').get(id=self.kwargs['group_id'])
         user = self.get_object()
         context = {
             'group': group,
