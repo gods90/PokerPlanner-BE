@@ -68,6 +68,7 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
         else:
             if self.instance.users.filter(email=attrs).exists():
                 raise serializers.ValidationError('Already a member!')
+        self.context['user'] = user.first()
         return attrs
 
     def update(self, instance, validated_data):
@@ -76,7 +77,7 @@ class GroupUpdateSerializer(serializers.ModelSerializer):
         """
         if 'email' not in validated_data:
             raise serializers.ValidationError("Email is required.")
-        user = User.objects.get(email=validated_data['email'])
+        user = self.context['user']
         instance.users.add(user)
         return super().update(instance, validated_data)
 
