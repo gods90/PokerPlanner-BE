@@ -1,16 +1,8 @@
-from django.urls import path, include
+from django.urls import path
 
-from user.views import InviteViewSet, UserViewSet, ChangePasswordView
-
-from rest_framework.routers import DefaultRouter
-
-router = DefaultRouter()
-router.register('',InviteViewSet, basename='user-invite')
+from user.views import ChangePasswordView, UserViewSet
 
 urlpatterns = [
-    path("", UserViewSet.as_view(),name="user"),
-    path('changepassword/', ChangePasswordView.as_view()),
-    path('invite/', include(router.urls))
-
+    path("", UserViewSet.as_view(), name="user"),
+    path('changepassword/', ChangePasswordView.as_view())
 ]
-

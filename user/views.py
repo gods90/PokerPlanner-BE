@@ -1,11 +1,12 @@
-from rest_framework import generics, mixins, viewsets
+from rest_framework import generics
+from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
-from pokerboard.serializers import InviteSerializer
+from rest_framework.authtoken.views import ObtainAuthToken
 
 from user.models import User
-from user.serializer.serializers import UserSerializer, ChangePasswordSerializer
+from user.serializers import (ChangePasswordSerializer,
+                                         UserSerializer)
 
-from pokerboard.models import Invite
 
 class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView):
     """
@@ -16,25 +17,43 @@ class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView)
 
     def get_object(self):
         return self.request.user
+    
+    def get_permissions(self):
+        if self.request.method in ['POST']:
+            return []
+        return [IsAuthenticated()]
+
 
 class ChangePasswordView(generics.UpdateAPIView):
     """
     View to change user password
     """
     queryset = User.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
 
     def get_object(self):
         return self.request.user
 
-class InviteViewSet(viewsets.GenericViewSet,mixins.ListModelMixin):
-    """
-    View to get user invites
-    """
-    queryset = Invite.objects.all()
-    permission_classes = (IsAuthenticated,)
-    serializer_class = InviteSerializer
 
-    def get_queryset(self):
-        return Invite.objects.filter(user_id=self.request.user.id,is_accepted=False)
+class LoginView(ObtainAuthToken):
+    """
+    Login view to send token and id of the user.
+    """
+    
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        token = Token.objects.get(key=response.data['token'])
+        response.data['user_id'] = token.user_id 
+        return response
+
+
+class LogoutView(generics.DestroyAPIView):
+    """
+    Logout view to delete token of the user.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        token = self.request.auth
+        return token
