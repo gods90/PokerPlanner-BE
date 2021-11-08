@@ -21,7 +21,7 @@ class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView)
     def get_permissions(self):
         if self.request.method in ['POST']:
             return []
-        return [IsAuthenticated]
+        return [IsAuthenticated()]
 
 
 class ChangePasswordView(generics.UpdateAPIView):
