@@ -1,16 +1,22 @@
+from re import S
 from django.db.models.query_utils import Q
 
 from rest_framework import mixins, status, viewsets
+from rest_framework import generics
+from rest_framework.generics import RetrieveAPIView, UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from invite.models import Invite
 
 from pokerboard import constants
+from pokerboard import serializers
+import pokerboard
 from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
+from pokerboard.permissions import PokerboardCustomPermissions
 from pokerboard.serializers import (PokerBoardCreationSerializer,
                                     PokerboardMembersSerializer, 
-                                    PokerboardSerializer, PokerboardGroupSerializer, TicketSerializer)
+                                    PokerboardSerializer, PokerboardGroupSerializer, PokerboardTicketAddSerializer, TicketSerializer)
 
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
@@ -38,6 +44,7 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
         """
         request.data['manager'] = request.user.id
         return super().create(request, *args, **kwargs)
+    
 
 
 class PokerboardMemberViewSet(viewsets.ModelViewSet):
@@ -65,6 +72,14 @@ class PokerboardMemberViewSet(viewsets.ModelViewSet):
         invite.save()
         instance.delete()
 
+    def partial_update(self, request, *args, **kwargs):
+        pokerboard_member = PokerboardUserGroup.objects.filter(pokerboard_id=self.kwargs['pokerboard_id'],
+                                                               user_id=self.kwargs['pk'])
+        serializer=PokerboardMembersSerializer(data=request.data,partial=True)
+        serializer.is_valid(raise_exception=True)
+        pokerboard_member.update(role=request.data['role'])
+        serializer=PokerboardMembersSerializer(pokerboard_member.first())
+        return Response(serializer.data)
 
 class PokerboardGroupViewSet(viewsets.ModelViewSet):
     """
@@ -97,27 +112,36 @@ class PokerboardGroupViewSet(viewsets.ModelViewSet):
         invites.all().update(status=constants.DECLINED)
         pokerboard_members.all().delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+    
+    def partial_update(self, request, *args, **kwargs):
         pokerboard_members = self.get_queryset()
         serializer = PokerboardMembersSerializer(
-            pokerboard_members, data=request.data, partial=partial, many=True)
+            data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        pokerboard_members.all().update(user_role=request.data['user_role'])
+        pokerboard_members.all().update(role=request.data['role'])
+        serializer = PokerboardMembersSerializer(pokerboard_members, many=True)
         return Response(serializer.data)
 
 
-class GetTicketViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+class TicketViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
     """
-    View for getting all tickets in the pokerboard
-    """
+    View for getting all tickets and add tickets in the pokerboard.
+    """  
     pagination_class = None
-    serializer_class = TicketSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PokerboardCustomPermissions]
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return TicketSerializer
+        return PokerboardTicketAddSerializer
+    
     def get_queryset(self):
         pokerboard_id = self.kwargs['pokerboard_id']
         return Ticket.objects.filter(
             pokerboard_id=pokerboard_id, status=constants.NOTESTIMATED
         ).order_by('-order')
+
+    def create(self, request, *args, **kwargs):
+        request.data['pokerboard'] = kwargs['pokerboard_id']
+        return super().create(request, *args, **kwargs)
+    

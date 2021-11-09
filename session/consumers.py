@@ -35,7 +35,7 @@ class TestConsumer(AsyncWebsocketConsumer):
         
         #Session is ongoing and is valid but user is not part of pokerboard.
         pokerboard = Pokerboard.objects.filter(Q(manager=self.scope['user']) | 
-                Q(invite__user=self.scope['user'],invite__status=constants.ACCEPTED)).distinct()
+                Q(invite__user=self.scope['user'], invite__status=constants.ACCEPTED)).distinct()
         
         session_pokerboard = pokerboard.filter(id=self.session.first().pokerboard.id) 
         if not session_pokerboard:
@@ -45,7 +45,7 @@ class TestConsumer(AsyncWebsocketConsumer):
         self.room_name = self.session.first().id
         self.room_group_name = 'session_%s' % self.room_name
         self.personal_group = 'user_%s' % self.scope['user'].id
-
+ 
         all_members = getattr(self.channel_layer, self.room_group_name,[])
         if self.scope['user'] in all_members:
             await self.accept()
@@ -64,7 +64,7 @@ class TestConsumer(AsyncWebsocketConsumer):
                 'type': 'broadcast',
                 'data': {
                     'context':'User Joined',
-                    'user':UserSerializer(self.scope['user']).data,
+                    'user': UserSerializer(self.scope['user']).data,
                     'message':f"{self.scope['user']} has joined {self.room_name}"
                 }
             }

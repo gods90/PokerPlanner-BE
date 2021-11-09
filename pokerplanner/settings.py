@@ -29,7 +29,8 @@ INSTALLED_APPS = [
     'group',
     'session',
     'invite',
-    'common'
+    'common',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [

@@ -1,14 +1,17 @@
 from os import POSIX_FADV_DONTNEED
 from django.db.models import Max
+from pokerboard import constants
 
 from pokerboard.models import Pokerboard, Ticket
 from session.models import UserEstimate
 from user.models import User
 
 def move_ticket_to_last(pokerboard, pk):
-    highest_order_of_all_non_estimated_tickets = Ticket.objects.filter(pokerboard__id=pokerboard,status=Ticket.NOTESTIMATED).aggregate(Max('order'))
+    ticket_with_highest_order = Ticket.objects.filter(pokerboard_id=pokerboard, status=constants.NOTESTIMATED).order_by('-order').first()
+    if ticket_with_highest_order is None or ticket_with_highest_order.id == pk:
+        return
     ticket = Ticket.objects.get(id=pk)
-    ticket.order = highest_order_of_all_non_estimated_tickets["order__max"] + 1
+    ticket.order = ticket_with_highest_order.order + 1
     ticket.save()
     
 def checkEstimateValue(deck_type, estimateValue):

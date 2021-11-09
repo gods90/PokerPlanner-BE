@@ -24,3 +24,5 @@ class User(AbstractUser, Timestamp):
     def __str__(self):
         return self.email
 
+    def getId(self):
+        return self.id
