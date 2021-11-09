@@ -58,12 +58,9 @@ class SessionSerializer(serializers.ModelSerializer):
         Updating ticket orders and creating new session.
         """
         tickets = {ticket['ticket_id']: ticket['order'] for ticket in validated_data['tickets']}
-        whens = [When(ticket_id=ticket_id, then=Value(tickets[ticket_id])) for ticket_id in tickets.keys()]
+        update_order_when_list = [When(ticket_id=ticket_id, then=Value(tickets[ticket_id])) for ticket_id in tickets.keys()]
         validated_data.pop('tickets')
         Ticket.objects.filter(ticket_id__in=tickets).update(
-            order=Case(
-                *whens,
-                default=F('order')
-            ),
+            order=Case(*update_order_when_list, )
         )
         return super().create(validated_data)
