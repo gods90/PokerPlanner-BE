@@ -18,7 +18,7 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ['session', 'ticket_id', 'order', 'estimation_date', 'status']
+        fields = ['pokerboard_id', 'ticket_id', 'order', 'estimation_date', 'status']
 
 
 class TicketsSerializer(serializers.ListSerializer):
