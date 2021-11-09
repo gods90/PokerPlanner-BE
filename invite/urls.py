@@ -1,13 +1,10 @@
-from django.urls import include, path
-
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
 from invite.views import InviteViewSet
 
-router = DefaultRouter()
-router.register('', InviteViewSet)
-
 urlpatterns = [
-    path('', include(router.urls))
+    path('invite/<int:pk>/',
+         InviteViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'})),
+    path('invite/', InviteViewSet.as_view({'get': 'list'})),
+    path('pokerboard/<int:pokerboard_id>/invite/', InviteViewSet.as_view({'post' : 'create'})),
 ]
-

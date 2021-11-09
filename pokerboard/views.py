@@ -27,7 +27,8 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = Pokerboard.objects.filter(Q(manager=self.request.user) |
-                                         Q(invite__user=self.request.user, invite__status=constants.ACCEPTED)).distinct()
+                                         Q(invite__user=self.request.user,
+                                          invite__status=constants.ACCEPTED)).distinct()
         return user
 
     def create(self, request, *args, **kwargs):
@@ -68,8 +69,8 @@ class PokerboardMemberViewSet(viewsets.ModelViewSet):
 
 class PokerboardGroupViewSet(viewsets.ModelViewSet):
     """
-    Pokerboard Member view to delete member from pokerboard,get pokerboard members 
-    and change pokerboard member role.
+    Pokerboard Group view to delete group from pokerboard,
+    change pokerboard group role.
     """
     queryset = PokerboardUserGroup.objects.all()
     serializer_class = PokerboardGroupSerializer

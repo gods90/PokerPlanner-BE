@@ -2,7 +2,6 @@ import requests
 
 from rest_framework import serializers, status
 
-from group.models import Group
 
 from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 
@@ -16,6 +15,7 @@ class TicketSerializer(serializers.ModelSerializer):
     Serializer for tickets stored in database.
     Sending response, update tickets etc.
     """
+
     class Meta:
         model = Ticket
         fields = ['pokerboard_id', 'ticket_id', 'order', 'estimation_date', 'status']
@@ -24,11 +24,16 @@ class TicketSerializer(serializers.ModelSerializer):
 class TicketsSerializer(serializers.ListSerializer):
     """
     Serializer to validate array of jira-id provided by user.
+    Example - ['MP-1', 'MP-2']
     """
     child = serializers.CharField()
 
 
 class PokerboardUserGroupSerializer(serializers.ModelSerializer):
+    """
+    Pokerboard user group serializer for adding new user in a pokerboard 
+    """
+
     class Meta:
         model = PokerboardUserGroup
         fields = ['id', 'user', 'group', 'role', 'pokerboard']
@@ -42,7 +47,7 @@ class PokerboardMembersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PokerboardUserGroup
-        fields = "__all__"
+        fields = ['pokerboard', 'user', 'role']
         extra_kwargs = {
             'pokerboard': {'read_only': True},
             'user': {'read_only': True},
@@ -54,22 +59,17 @@ class PokerboardGroupSerializer(serializers.ModelSerializer):
     """
     Pokerboard Group Serializer
     """
+
     class Meta:
         model = PokerboardUserGroup
         fields = ['group']
-
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        group = Group.objects.get(id=rep['group'])
-        rep['group'] = group.name
-        rep['group_id'] = group.id
-        return rep
 
 
 class PokerboardSerializer(serializers.ModelSerializer):
     """
     Pokerboard serializer
     """
+
     class Meta:
         model = Pokerboard
         fields = ['id', 'title', 'game_duration', 'description', 'manager']
@@ -89,7 +89,9 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pokerboard
-        fields = '__all__'
+        fields = [
+            'id', 'manager', 'ticket_responses', 'title', 'description', 'game_duration', 'jql', 'tickets', 'sprint_id'
+        ]
 
     def get_ticket_responses(self, instance):
         jira = settings.JIRA
@@ -116,7 +118,7 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
         # Adding jql
         if 'jql' in data.keys():
-            if(len(myJql) != 0):
+            if len(myJql) != 0:
                 myJql += " OR "
             myJql += data['jql']
 
@@ -146,27 +148,22 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
         Imported tickets from JIRA and created pokerboard only if 
         atleast one valid ticket was found.
         """
-        new_pokerboard = {key: val for key, val in self.data.items() if key not in [
-            'sprint_id', 'tickets', 'jql']}
-        ticket_responses = new_pokerboard.pop('ticket_responses')
-
-        valid_tickets = 0
-        for ticket_response in ticket_responses:
-            valid_tickets += ticket_response['status_code'] == status.HTTP_200_OK
-
-        if valid_tickets == 0:
-            raise serializers.ValidationError('Invalid tickets!')
-
-        manager = User.objects.get(id=new_pokerboard["manager"])
-        new_pokerboard["manager"] = manager
-        pokerboard = Pokerboard(**new_pokerboard)
-        pokerboard.save()
+        validated_data.pop('sprint_id', None)
+        validated_data.pop('tickets', None)
+        validated_data.pop('jql', None)
+        ticket_responses = self.data['ticket_responses']
 
         ticket_responses = [
             (
                 ticket_response
             ) for ticket_response in ticket_responses if ticket_response['status_code'] == 200
         ]
+
+        if len(ticket_responses) == 0:
+            raise serializers.ValidationError('Invalid tickets!')
+
+        pokerboard = Pokerboard.objects.create(**validated_data)
+        
 
         Ticket.objects.bulk_create(
             [
