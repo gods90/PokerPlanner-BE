@@ -6,16 +6,17 @@ from django.conf import settings
 from smtplib import SMTPException
 
 import jwt
+from invite.models import Invite
 
 from pokerboard import constants
 
 
-def send_invite_mail(manager_email, recipient, invite):
+def send_invite_mail(manager_email, recipient, invite_id):
     """
     Function to send invitation to join pokerboard on email.
     """
     token = jwt.encode(
-        {'invite_id': invite.id},
+        {'invite_id': invite_id},
         settings.SECRET_KEY, settings.JWT_HASHING_ALGORITHM
     )
     context = {
@@ -33,4 +34,5 @@ def send_invite_mail(manager_email, recipient, invite):
             email_subject, plain_text_body, settings.DEFAULT_FROM_EMAIL, recipient, html_message=html_body
         )
     except SMTPException:
+        invite = Invite.objects.get(id=invite_id)
         invite.delete()

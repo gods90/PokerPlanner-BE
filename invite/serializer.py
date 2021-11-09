@@ -66,7 +66,7 @@ class InviteCreateSerializer(serializers.Serializer):
                     # TODO Resend token if token expired.
                     invite = Invite.objects.create(**attrs)
                     send_invite_email_task.delay(
-                        pokerboard_manager_email, [attrs['email']], invite
+                        pokerboard_manager_email, [attrs['email']], invite.id
                     )
                 raise serializers.ValidationError('Invitation to pokerboard will be sent.')
         else:
