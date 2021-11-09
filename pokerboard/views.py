@@ -1,16 +1,16 @@
 from django.db.models.query_utils import Q
 
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from invite.models import Invite
 
 from pokerboard import constants
-from pokerboard.models import Pokerboard, PokerboardUserGroup
+from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 from pokerboard.serializers import (PokerBoardCreationSerializer,
                                     PokerboardMembersSerializer, 
-                                    PokerboardSerializer, PokerboardGroupSerializer)
+                                    PokerboardSerializer, PokerboardGroupSerializer, TicketSerializer)
 
 
 class PokerBoardViewSet(viewsets.ModelViewSet):
@@ -107,3 +107,18 @@ class PokerboardGroupViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         pokerboard_members.all().update(user_role=request.data['user_role'])
         return Response(serializer.data)
+
+
+class GetTicketViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    """
+    View for getting all tickets in the pokerboard
+    """
+    pagination_class = None
+    serializer_class = TicketSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        pokerboard_id = self.kwargs['pokerboard_id']
+        return Ticket.objects.filter(
+            pokerboard_id=pokerboard_id, status=constants.NOTESTIMATED
+        ).order_by('-order')

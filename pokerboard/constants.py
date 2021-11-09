@@ -15,3 +15,11 @@ INVITE_STATUS = (
     (ACCEPTED, 'ACCEPTED'),
     (DECLINED, 'DECLINED')
 )
+
+ESTIMATED = 0
+NOTESTIMATED = 1
+
+STATUS_CHOICES = (
+    (ESTIMATED, 'estimated'),
+    (NOTESTIMATED, 'notestimated'),
+)

@@ -67,8 +67,8 @@ class Ticket(Timestamp):
         null=True, blank=True, help_text="Date on which ticket was estimated"
     )
     status = models.IntegerField(
-        choices=STATUS_CHOICES,
-        default=NOTESTIMATED,
+        choices=constants.STATUS_CHOICES,
+        default=constants.NOTESTIMATED,
         help_text='Default ticket status is not estimated.',
     )
 
