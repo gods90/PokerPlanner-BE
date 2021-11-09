@@ -48,14 +48,6 @@ class Ticket(Timestamp):
     """
     Model to store ticket detail
     """
-    ESTIMATED = 0
-    NOTESTIMATED = 1
-
-    STATUS_CHOICES = (
-        (ESTIMATED, 'estimated'),
-        (NOTESTIMATED, 'notestimated'),
-    )
-
     pokerboard = models.ForeignKey(
         Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.',related_name="tickets"
     )
@@ -67,7 +59,7 @@ class Ticket(Timestamp):
         null=True, blank=True, help_text="Date on which ticket was estimated"
     )
     status = models.IntegerField(
-        choices=constants.STATUS_CHOICES,
+        choices=constants.TICKET_STATUS_CHOICES,
         default=constants.NOTESTIMATED,
         help_text='Default ticket status is not estimated.',
     )

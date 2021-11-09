@@ -1,8 +1,9 @@
 from  django.db.models import Max
 
+from pokerboard import constants
 from pokerboard.models import Ticket
 from user.models import User
-from session.models import UserEstimate
+from session.models import UserEstimate, Session
 
 def move_ticket_to_last(pokerboard, pk):
     highest_order_of_all_non_estimated_tickets = Ticket.objects.filter(pokerboard__id=pokerboard,status=Ticket.NOTESTIMATED).aggregate(Max('order'))
@@ -23,8 +24,9 @@ def checkEstimateValue(deck_type, estimateValue):
         deck = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
         return estimateValue in deck
 
-def set_user_estimates(user_estimates, ticket_key):    
+def set_user_estimates(user_estimates, currentTicket):    
    
+    ticket_key = currentTicket.ticket_id
     users_estimates_data = []
     for user,data in user_estimates.items():
         user_estimate_data = {}
@@ -40,3 +42,10 @@ def set_user_estimates(user_estimates, ticket_key):
             ]
         )
 
+def get_current_ticket(session_id):
+        session = (Session.objects
+                        .select_related('pokerboard')
+                        .get(id=session_id))
+        pokerboard_id = session.pokerboard
+        currentTicketID = Ticket.objects.filter(pokerboard_id=pokerboard_id, status=constants.NOTESTIMATED).order_by('order')
+        return currentTicketID.first()
