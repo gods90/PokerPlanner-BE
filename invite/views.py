@@ -1,13 +1,15 @@
-from rest_framework import status, viewsets
+from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from invite.models import Invite
-from invite.serializer import InviteSerializer, InviteCreateSerializer
+from invite.serializer import InviteSerializer, InviteCreateSerializer, InviteSignupSerializer
 
 from pokerboard import constants
 from pokerboard.serializers import PokerboardUserGroupSerializer
+
+from user.models import User
 
 
 class InviteViewSet(viewsets.ModelViewSet):
@@ -20,7 +22,6 @@ class InviteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Invite.objects.filter(email=self.request.user.email, status=constants.PENDING)
-
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -60,4 +61,23 @@ class InviteViewSet(viewsets.ModelViewSet):
         invite.save()
         serializer = InviteSerializer(instance=invite)
         return Response(data=serializer.data)
-    
+
+
+class InviteSignupView(generics.RetrieveAPIView):
+    """
+    View to validate jwt token sent on mail to join pokerboard
+    """
+
+    def retrieve(self, request, *args, **kwargs):
+        serializer = InviteSignupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        invite = serializer.context['invite']
+        user = User.objects.filter(email=invite.email).first()
+        if user == None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            user = request.user
+            if request.user.is_authenticated and user.email == invite.email:
+                return Response(status=status.HTTP_200_OK)
+            else:
+                return Response(status=status.HTTP_403_FORBIDDEN)

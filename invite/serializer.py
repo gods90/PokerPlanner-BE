@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 
 from invite.models import Invite
@@ -9,6 +10,8 @@ from pokerboard.models import Pokerboard
 from group.models import Group
 
 from user.models import User
+
+import jwt
 
 
 class InviteSerializer(serializers.ModelSerializer):
@@ -104,3 +107,28 @@ class InviteCreateSerializer(serializers.Serializer):
                     new_data['user_role'] = attrs['user_role']
                 invite = Invite.objects.create(**new_data)
         return invite
+
+
+class InviteSignupSerializer(serializers.Serializer):
+    """
+    Serializer to validate jwt token sent on mail
+    """
+    jwt_token = serializers.CharField()
+
+    def validate_jwt_token(self, attrs):
+        try:
+            payload = jwt.decode(attrs, settings.SECRET_KEY,
+                                 settings.JWT_HASHING_ALGORITHM)
+        except Exception as e:
+            raise serializers.ValidationError(
+                'Token either invalid or expired. Please try with valid token'
+            )
+
+        invite_id = payload['invite_id']
+        invite = Invite.objects.filter(id=invite_id).first()
+        if invite == None or invite.status != constants.PENDING:
+            raise serializers.ValidationError(
+                'Token either invalid or expired. Please try with valid token'
+            )
+        self.context['invite'] = invite
+        return attrs
