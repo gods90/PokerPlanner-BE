@@ -5,6 +5,7 @@ from group.models import Group
 
 from invite.email_send import send_mail
 from invite.models import Invite
+from invite.tasks import send_invite_email_task
 
 from pokerboard import constants
 from pokerboard.models import Pokerboard
@@ -60,12 +61,13 @@ class InviteCreateSerializer(serializers.Serializer):
             users = group.users.all()
 
         elif 'email' in attrs.keys():
-            users = User.objects.filter(email=attrs['email'])
-            if not users.exists():
-                send_mail(to_emails=[attrs['email']])
-                raise serializers.ValidationError(
-                    "Invitation to pokerboard will be sent."
-                )
+            try:
+                user = User.objects.get(email=attrs['email'])
+                users.append(user)
+            except User.DoesNotExist as e:
+                pokerboard_manager_email = pokerboard.manager.email
+                send_invite_email_task.delay(pokerboard_manager_email, attrs['email'])
+                raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
         else:
             raise serializers.ValidationError('Provide group_id/email!')
 

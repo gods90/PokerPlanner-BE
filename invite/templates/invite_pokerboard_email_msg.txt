@@ -1,0 +1,2 @@
+Hello,
+You have been invited by {{ manager_email }} to join a pokerboard.

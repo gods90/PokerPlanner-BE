@@ -357,4 +357,3 @@ class LoginTestCases(APITestCase):
         }
         self.assertEqual(response.status_code, 400)
         self.assertDictEqual(expected_data, response.data)
-
