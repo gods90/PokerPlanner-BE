@@ -4,7 +4,7 @@ from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
 
 
-@database_sync_to_async
+@database_sync_to_async  #Database expect us to call in sync manner but we need to call it in async way.
 def get_user(token_key):
     """
     To check if the token exist.

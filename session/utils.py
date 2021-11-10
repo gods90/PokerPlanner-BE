@@ -14,6 +14,7 @@ def move_ticket_to_last(pokerboard: int, pk: int) -> None:
     ticket = Ticket.objects.get(id=pk)
     ticket.order = highest_order_of_all_non_estimated_tickets["order__max"] + 1
     ticket.save()
+
     
 def check_estimate_value(deck_type: int, estimateValue: int) -> bool:
     """
@@ -31,6 +32,7 @@ def check_estimate_value(deck_type: int, estimateValue: int) -> bool:
     if deck_type == Pokerboard.FIBONACCI:
         deck = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
         return estimateValue in deck
+
 
 def set_user_estimates(user_estimates: Dict, ticket_key: str) -> None:    
     """

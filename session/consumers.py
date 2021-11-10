@@ -200,7 +200,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
             set_user_estimates(self.estimates, ticket_key)
             self.timer = datetime.now()
         else:
-            await self.send(text_data=json.dumps({'error':'You do not have permission for this.'}))
+            await self.send(text_data=json.dumps({'error': 'You do not have permission for this.'}))
 
     async def estimate(self, event):
         """
