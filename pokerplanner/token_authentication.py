@@ -6,6 +6,9 @@ from channels.middleware import BaseMiddleware
 
 @database_sync_to_async
 def get_user(token_key):
+    """
+    To check if the token exist.
+    """
     try:
         token = Token.objects.get(key=token_key)
         return token.user
@@ -13,12 +16,15 @@ def get_user(token_key):
         return AnonymousUser()
 
 class TokenAuthMiddleware(BaseMiddleware):
+    """
+    TokenAuthMiddleware to add user to scope.
+    """
     def __init__(self, inner):
         super().__init__(inner)
 
     async def __call__(self, scope, receive, send):
         try:
-            token_key = (dict((x.split('=') for x in scope['query_string'].decode().split("&")))).get('token', None)
+            token_key = (dict((token.split('=') for token in scope['query_string'].decode().split("&")))).get('token', None)
         except ValueError:
             token_key = None
         scope['user'] = AnonymousUser() if token_key is None else await get_user(token_key)
