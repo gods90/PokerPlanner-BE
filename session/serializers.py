@@ -1,4 +1,4 @@
-from django.db.models.expressions import Case, Value, When, F
+from django.db.models.expressions import Case, Value, When
 
 from rest_framework import serializers
 
