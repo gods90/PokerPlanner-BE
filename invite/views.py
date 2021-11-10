@@ -69,7 +69,8 @@ class InviteSignupView(generics.RetrieveAPIView):
     """
 
     def retrieve(self, request, *args, **kwargs):
-        serializer = InviteSignupSerializer(data=request.data)
+        jwt_token = request.GET.get('token', '')
+        serializer = InviteSignupSerializer(data={'jwt_token': jwt_token})
         serializer.is_valid(raise_exception=True)
         invite = serializer.context['invite']
         user = User.objects.filter(email=invite.email).first()
