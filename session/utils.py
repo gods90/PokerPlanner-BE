@@ -1,9 +1,10 @@
-from typing import Any, Dict
+from typing import Dict
 
 from django.db.models import Max
 
+from pokerboard import constants
 from pokerboard.models import Pokerboard, Ticket
-from session.models import UserEstimate
+from session.models import Session, UserEstimate
 from user.models import User
 
 def move_ticket_to_last(pokerboard: int, pk: int) -> None:
@@ -14,7 +15,6 @@ def move_ticket_to_last(pokerboard: int, pk: int) -> None:
     ticket = Ticket.objects.get(id=pk)
     ticket.order = highest_order_of_all_non_estimated_tickets["order__max"] + 1
     ticket.save()
-
     
 def check_estimate_value(deck_type: int, estimateValue: int) -> bool:
     """
@@ -33,14 +33,13 @@ def check_estimate_value(deck_type: int, estimateValue: int) -> bool:
         deck = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
         return estimateValue in deck
 
-
 def set_user_estimates(user_estimates: Dict, ticket_key: str) -> None:    
     """
     Saves estimate given by user in database.
     """
     users_estimates_data = []
-    user_estimate_data = {}
     for user,data in user_estimates.items():
+        user_estimate_data = {}
         user_estimate_data['user'] = User.objects.get(email=user)
         user_estimate_data['ticket'] = Ticket.objects.get(ticket_id=ticket_key)
         user_estimate_data['estimate'] = data[0]
@@ -48,9 +47,14 @@ def set_user_estimates(user_estimates: Dict, ticket_key: str) -> None:
         users_estimates_data.append(user_estimate_data)
     UserEstimate.objects.bulk_create(
             [
-                UserEstimate(
-                    user=user_estimate_data['user'], ticket=user_estimate_data['ticket'],
-                    estimate=user_estimate_data['estimate'], estimation_duration=user_estimate_data['estimation_duration']
-                ) for ind, user_estimate_data in enumerate(users_estimates_data)
+                UserEstimate(**user_estimate_data) for user_estimate_data in users_estimates_data       
             ]
         )
+
+def get_current_ticket(session_id: int) -> object:
+        session = Session.objects.select_related('pokerboard').get(id=session_id)
+        pokerboard_id = session.pokerboard
+        currentTicketID = Ticket.objects.filter(
+            pokerboard_id=pokerboard_id, status=constants.NOTESTIMATED
+        ).order_by('order')
+        return currentTicketID.first()

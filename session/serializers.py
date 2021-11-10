@@ -1,6 +1,8 @@
 from rest_framework import serializers
+from pokerboard import constants
 
 from pokerboard.models import Pokerboard
+from pokerboard.constants import SESSION_METHOD_CHOICES
 from session.models import Session
 
 
@@ -16,7 +18,7 @@ class SessionSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         repr = super().to_representation(instance)
-        repr["status"] =  Session.STATUS_CHOICES[repr["status"]][1]
+        repr["status"] =  constants.SESSION_STATUS_CHOICES[repr["status"]][1]
         return repr
     
     def validate_pokerboard(self, attrs):
@@ -35,9 +37,7 @@ class MethodSerializer(serializers.Serializer):
     """
     Method serializer to check valid method name and method value is dictionary.
     """
-    method_name = serializers.ChoiceField(
-        choices=["estimate", "start_game", "skip_ticket", "start_timer", "final_estimate"]
-    )
+    method_name = serializers.ChoiceField(choices=SESSION_METHOD_CHOICES)
     method_value = serializers.DictField()
 
 

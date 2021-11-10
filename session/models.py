@@ -1,27 +1,23 @@
 from django.db import models
 
 from pokerboard.models import Pokerboard, Ticket
+
 from user.models import User
+
 from common.models import Timestamp
+
+from pokerboard import constants
+
 
 class Session(Timestamp):
     """
     Model to store sessions
     """
-
-    ONGOING = 0
-    HASENDED = 1
-
-    STATUS_CHOICES = (
-        (ONGOING, "ongoing"),
-        (HASENDED, "hasended"),
-    )
-
     pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE, related_name="session")
     title = models.CharField(max_length=100, help_text='Title of the session.')
     status = models.IntegerField(
-        choices=STATUS_CHOICES,
-        default=ONGOING,
+        choices=constants.SESSION_STATUS_CHOICES,
+        default=constants.ONGOING,
         help_text="Session ongoing or ended",
     )
     time_started_at = models.DateTimeField(null=True)

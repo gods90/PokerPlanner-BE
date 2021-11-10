@@ -7,7 +7,9 @@ from user.models import User
 
 
 class Pokerboard(Timestamp):
-    """ Model to store Pokerboard settings."""
+    """
+    Model to store Pokerboard settings.
+    """
     SERIES = 1
     EVEN = 2
     ODD = 3
@@ -31,7 +33,9 @@ class Pokerboard(Timestamp):
     estimation_type = models.IntegerField(
         choices=ESTIMATION_CHOICES, default=SERIES, help_text='Estimation type.'
     )
-    game_duration = models.DurationField(null=False, help_text="Duration for game in pokerboard.")
+    game_duration = models.DurationField(
+        null=False, help_text="Duration for game in pokerboard."
+    )
     
     def __str__(self) -> str:
         return self.title
@@ -41,14 +45,6 @@ class Ticket(Timestamp):
     """
     Model to store ticket detail
     """
-    ESTIMATED = 0
-    NOTESTIMATED = 1
-
-    STATUS_CHOICES = (
-        (ESTIMATED, 'estimated'),
-        (NOTESTIMATED, 'notestimated'),
-    )
-
     pokerboard = models.ForeignKey(
         Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.', related_name="tickets"
     )
@@ -60,8 +56,8 @@ class Ticket(Timestamp):
         null=True, blank=True, help_text="Date on which ticket was estimated"
     )
     status = models.IntegerField(
-        choices=STATUS_CHOICES,
-        default=NOTESTIMATED,
+        choices=constants.TICKET_STATUS_CHOICES,
+        default=constants.NOTESTIMATED,
         help_text='Default ticket status is not estimated.',
     )
 
@@ -86,4 +82,3 @@ class PokerboardUserGroup(Timestamp):
         if self.user:
             return f'{self.pokerboard} -> {self.user}'
         return f'{self.pokerboard} -> {self.group}'
-

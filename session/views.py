@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.generics import CreateAPIView, get_object_or_404, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from pokerboard import constants
 
 from pokerplanner.settings import JIRA
 from session.models import Session
@@ -22,7 +23,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         To get the active session of the pokerboard.
         """
         session_id = self.kwargs["pk"]
-        active_session = get_object_or_404(Session, id=session_id, status=Session.ONGOING)
+        active_session = get_object_or_404(Session, id=session_id, status=constants.ONGOING)
         return active_session
 
 
