@@ -20,17 +20,18 @@ class Session(Timestamp):
         (HASENDED, "hasended"),
     )
 
-    pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE)
+    pokerboard = models.ForeignKey(Pokerboard, on_delete=models.CASCADE, related_name="session")
     title = models.CharField(max_length=100, help_text='Title of the session.')
     status = models.IntegerField(
         choices=STATUS_CHOICES,
         default=ONGOING,
         help_text="Session ongoing or ended",
     )
-    time_started_at = models.DateTimeField(auto_now=True)
+    time_started_at = models.DateTimeField(null=True)
 
     def __str__(self):
         return f"{self.title} -> {self.pokerboard}"
+    
 
 
 class UserEstimate(Timestamp):

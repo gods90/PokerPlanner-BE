@@ -1,6 +1,7 @@
+from rest_framework_swagger.views import get_swagger_view
+
 from django.contrib import admin
 from django.urls import include, path
-from rest_framework_swagger.views import get_swagger_view
 
 from user.views import LoginView, LogoutView
 

@@ -2,7 +2,6 @@ import requests
 
 from rest_framework import serializers, status
 
-
 from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 
 from pokerplanner import settings
@@ -72,7 +71,7 @@ class PokerboardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pokerboard
-        fields = ['id', 'title', 'game_duration', 'description', 'manager']
+        fields = ['id', 'title', 'game_duration', 'description', 'manager', 'estimation_type']
 
 
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
@@ -164,7 +163,6 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
         pokerboard = Pokerboard.objects.create(**validated_data)
         
-
         Ticket.objects.bulk_create(
             [
                 Ticket(

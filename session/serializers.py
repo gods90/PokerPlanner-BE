@@ -26,7 +26,7 @@ class SessionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Session
-        fields = ['id', 'pokerboard', 'status', 'title']
+        fields = ['id', 'pokerboard', 'status', 'title', 'tickets']
     
     def validate_tickets(self, tickets):
         tickets.sort(key=lambda ticket: ticket['order'])
@@ -64,3 +64,20 @@ class SessionSerializer(serializers.ModelSerializer):
             order=Case(*update_order_when_list, )
         )
         return super().create(validated_data)
+
+class MethodSerializer(serializers.Serializer):
+    """
+    Method serializer to check valid method name and method value is dictionary.
+    """
+    method_name = serializers.ChoiceField(
+        choices=["estimate", "start_game", "skip_ticket", "start_timer", "final_estimate"]
+    )
+    method_value = serializers.DictField()
+
+
+class CommentSerializer(serializers.Serializer):
+    """
+    Comment serializer with comment and the issue to comment on
+    """
+    comment = serializers.CharField()
+    issue = serializers.SlugField()
