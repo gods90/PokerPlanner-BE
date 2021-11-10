@@ -5,7 +5,9 @@ from session.models import Session
 
 
 class SessionSerializer(serializers.ModelSerializer):
-
+    """
+    Serializer for session creation.
+    """
     pokerboard = serializers.PrimaryKeyRelatedField(queryset=Pokerboard.objects.all())
     
     class Meta:
@@ -21,14 +23,21 @@ class SessionSerializer(serializers.ModelSerializer):
         """
         To validate only one session active at a time of pokerboard.
         """
-        active_session = Session.objects.filter(pokerboard_id=attrs.id,status=Session.ONGOING)
+        active_session = Session.objects.filter(pokerboard_id=attrs.id, status=Session.ONGOING)
         if active_session.exists():
-            raise serializers.ValidationError("An active session already exists for this pokerboard.")
+            raise serializers.ValidationError(
+                "An active session already exists for this pokerboard."
+            )
         return attrs
 
 
 class MethodSerializer(serializers.Serializer):
-    method_name = serializers.ChoiceField(choices=["estimate", "start_game", "skip_ticket", "start_timer", "final_estimate"])
+    """
+    Method serializer to check valid method name and method value is dictionary.
+    """
+    method_name = serializers.ChoiceField(
+        choices=["estimate", "start_game", "skip_ticket", "start_timer", "final_estimate"]
+    )
     method_value = serializers.DictField()
 
 

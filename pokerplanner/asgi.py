@@ -3,11 +3,11 @@ from django.urls import path
 from channels.routing import ProtocolTypeRouter, URLRouter
 from pokerplanner.token_authentication import TokenAuthMiddleware
 
-from session.consumers import TestConsumer
+from session.consumers import SessionConsumer
 
 
 ws_patterns = [
-    path("session/<int:session_id>/", TestConsumer.as_asgi())
+    path("session/<int:session_id>/", SessionConsumer.as_asgi())
 ]
 
 application = ProtocolTypeRouter({

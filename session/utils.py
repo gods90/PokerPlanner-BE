@@ -1,4 +1,3 @@
-from os import POSIX_FADV_DONTNEED
 from django.db.models import Max
 
 from pokerboard.models import Pokerboard, Ticket
@@ -11,15 +10,15 @@ def move_ticket_to_last(pokerboard, pk):
     ticket.order = highest_order_of_all_non_estimated_tickets["order__max"] + 1
     ticket.save()
     
-def checkEstimateValue(deck_type, estimateValue):
+def check_estimate_value(deck_type, estimateValue):
     if not isinstance(estimateValue,int):
         return False
     if deck_type == Pokerboard.SERIES:
-        return (estimateValue>0 and estimateValue<11)
+        return 0 < estimateValue < 11
     if deck_type == Pokerboard.EVEN:
-        return (estimateValue>0 and estimateValue<21 and estimateValue%2 == 0)
+        return 0 < estimateValue < 21 and estimateValue % 2 == 0
     if deck_type == Pokerboard.ODD:
-        return (estimateValue>0 and estimateValue<20 and estimateValue%2 != 0)
+        return 0 < estimateValue < 21 and estimateValue % 2 != 0
     if deck_type == Pokerboard.FIBONACCI:
         deck = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
         return estimateValue in deck

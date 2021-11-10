@@ -19,8 +19,10 @@ from session.utils import checkEstimateValue, set_user_estimates, move_ticket_to
 from user.serializer.serializers import UserSerializer
 
 
-class TestConsumer(AsyncWebsocketConsumer):
-    
+class SessionConsumer(AsyncWebsocketConsumer):
+    """
+    Session Consumer for web socket connections.
+    """
     async def connect(self):
         """
         Runs when a request to make a connection is received.
@@ -34,8 +36,11 @@ class TestConsumer(AsyncWebsocketConsumer):
             return
         
         #Session is ongoing and is valid but user is not part of pokerboard.
-        pokerboard = Pokerboard.objects.filter(Q(manager=self.scope['user']) | 
-                Q(invite__user=self.scope['user'],invite__status=constants.ACCEPTED)).distinct()
+        pokerboard = Pokerboard.objects.filter(
+            Q(manager=self.scope['user']) 
+            | Q(invite__user=self.scope['user'], 
+            invite__status=constants.ACCEPTED)
+        ).distinct()
         
         session_pokerboard = pokerboard.filter(id=self.session.first().pokerboard.id) 
         if not session_pokerboard:
@@ -46,13 +51,13 @@ class TestConsumer(AsyncWebsocketConsumer):
         self.room_group_name = 'session_%s' % self.room_name
         self.personal_group = 'user_%s' % self.scope['user'].id
 
-        all_members = getattr(self.channel_layer, self.room_group_name,[])
+        all_members = getattr(self.channel_layer, self.room_group_name, [])
         if self.scope['user'] in all_members:
             await self.accept()
             self.pokerboard_manager = pokerboard.first().manager
             return
         all_members.append(self.scope['user'])
-        setattr(self.channel_layer, self.room_group_name,all_members)
+        setattr(self.channel_layer, self.room_group_name, all_members)
         
         await self.accept()
         self.pokerboard_manager = pokerboard.first().manager
@@ -63,9 +68,9 @@ class TestConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'broadcast',
                 'data': {
-                    'context':'User Joined',
-                    'user':UserSerializer(self.scope['user']).data,
-                    'message':f'{self.scope['user']} has joined {self.room_name}'
+                    'context': 'User Joined',
+                    'user': UserSerializer(self.scope['user']).data,
+                    'message': f"{self.scope['user']} has joined {self.room_name}"
                 }
             }
         )
@@ -93,7 +98,7 @@ class TestConsumer(AsyncWebsocketConsumer):
         """
         Runs when connection is closed.
         """
-        all_members = getattr(self.channel_layer, self.room_group_name,[])
+        all_members = getattr(self.channel_layer, self.room_group_name, [])
         all_members.remove(self.scope['user'])
         setattr(self.channel_layer, self.room_group_name, all_members)
         
@@ -109,9 +114,9 @@ class TestConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'broadcast',
                 'data': {
-                    'context':'User Left',
-                    'user':UserSerializer(self.scope['user']).data,
-                    'message':f'{self.scope['user']} has left the session.'
+                    'context': 'User Left',
+                    'user': UserSerializer(self.scope['user']).data,
+                    'message': f"{self.scope['user']} has left the session."
                 }
             }
         )
@@ -135,14 +140,14 @@ class TestConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'broadcast',
                 'data': {
-                    'context':'Game Info',
-                    'users':serializer.data,
-                    'startTime':json.dumps((str(self.session[0].time_started_at)))
+                    'context': 'Game Info',
+                    'users': serializer.data,
+                    'startTime': json.dumps((str(self.session[0].time_started_at)))
                 }
             }
         )   
         
-    async def skip_ticket(self,event):
+    async def skip_ticket(self, event):
         """
         Skip the current ticket to last.
         """
@@ -179,7 +184,7 @@ class TestConsumer(AsyncWebsocketConsumer):
         deck_type = session.pokerboard.estimation_type
         ticket_key = event['message']['ticket_key']
         estimate = event['message']['estimate']
-        if not checkEstimateValue(deck_type,estimate):
+        if not checkEstimateValue(deck_type, estimate):
             raise ValidationError('Invalid estimate value')
         if self.scope['user'] == self.pokerboard_manager:
             jira = settings.JIRA
@@ -194,6 +199,8 @@ class TestConsumer(AsyncWebsocketConsumer):
             )
             set_user_estimates(self.estimates, ticket_key)
             self.timer = datetime.now()
+        else:
+            await self.send(text_data=json.dumps({'error':'You do not have permission for this.'}))
 
     async def estimate(self, event):
         """
@@ -204,7 +211,7 @@ class TestConsumer(AsyncWebsocketConsumer):
         try:
             ticket_key = event['message']['ticket_key']
             estimate = event['message']['estimate']
-            if not checkEstimateValue(deck_type,estimate):
+            if not checkEstimateValue(deck_type, estimate):
                 raise ValidationError('Invalid estimate value')
             
             await self.channel_layer.group_send(
@@ -221,7 +228,7 @@ class TestConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'message.manager',
                     'username': self.scope['user'].email,
-                    'ticket_key':ticket_key,
+                    'ticket_key': ticket_key,
                     'estimate': estimate
                 }
             )
@@ -258,7 +265,7 @@ class TestConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'broadcast',
                     'data': {
-                        'context':'Timer Started',
+                        'context': 'Timer Started',
                         'startTime': json.dumps(self.session[0].time_started_at.strftime('%H:%M:%S'))
                     }
                 }
