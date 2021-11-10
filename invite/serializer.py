@@ -1,9 +1,7 @@
-from django.db.models.query_utils import Q
 from rest_framework import serializers
 
 from group.models import Group
 
-from invite.email_send import send_mail
 from invite.models import Invite
 from invite.tasks import send_invite_email_task
 
