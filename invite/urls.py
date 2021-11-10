@@ -2,12 +2,12 @@ from rest_framework.routers import DefaultRouter
 
 from django.urls import path, include
 
-from invite.views import InviteViewSet, InviteSignupView
+from invite.views import InviteViewSet, ValidateInviteView
 
 router = DefaultRouter()
 router.register('', InviteViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('validate', InviteSignupView.as_view())
+    path('validate', ValidateInviteView.as_view())
 ]

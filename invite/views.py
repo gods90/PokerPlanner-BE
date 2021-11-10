@@ -27,7 +27,7 @@ class InviteViewSet(viewsets.ModelViewSet):
         if self.request.method == 'POST':
             return InviteCreateSerializer
         return super().get_serializer_class()
-    
+
     def create(self, request, *args, **kwargs):
         serializer = InviteCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -56,14 +56,14 @@ class InviteViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         invite = self.get_object()
         if invite.status != constants.PENDING:
-            return Response(data={'msg' : 'Already accepted'},status=status.HTTP_400_BAD_REQUEST) 
+            return Response(data={'msg': 'Already accepted'}, status=status.HTTP_400_BAD_REQUEST)
         invite.status = constants.DECLINED
         invite.save()
         serializer = InviteSerializer(instance=invite)
         return Response(data=serializer.data)
 
 
-class InviteSignupView(generics.RetrieveAPIView):
+class ValidateInviteView(generics.RetrieveAPIView):
     """
     View to validate jwt token sent on mail to join pokerboard
     """
@@ -74,11 +74,11 @@ class InviteSignupView(generics.RetrieveAPIView):
         serializer.is_valid(raise_exception=True)
         invite = serializer.context['invite']
         user = User.objects.filter(email=invite.email).first()
-        if user == None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        if user is None:
+            return Response(data={'message': 'User not signed up.', 'isUserSignedUp': False})
         else:
             user = request.user
             if request.user.is_authenticated and user.email == invite.email:
-                return Response(status=status.HTTP_200_OK)
+                return Response(data={'isUserSignedUp': True, 'isSameUser': True})
             else:
-                return Response(status=status.HTTP_403_FORBIDDEN)
+                return Response(data={'isUserSignedUp': True, 'isSameUser': False})

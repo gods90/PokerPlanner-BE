@@ -1,6 +1,7 @@
 import re
 
 from django.contrib.auth.password_validation import validate_password
+from django.conf import settings
 
 from rest_framework import serializers
 
@@ -16,7 +17,6 @@ from invite.models import Invite
 from pokerboard import constants
 
 import jwt
-from django.conf import settings
 
 
 class UserSerializer(serializers.ModelSerializer):

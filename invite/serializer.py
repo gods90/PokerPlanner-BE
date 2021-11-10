@@ -126,7 +126,7 @@ class InviteSignupSerializer(serializers.Serializer):
 
         invite_id = payload['invite_id']
         invite = Invite.objects.filter(id=invite_id).first()
-        if invite == None or invite.status != constants.PENDING:
+        if not invite or invite.status != constants.PENDING:
             raise serializers.ValidationError(
                 'Token either invalid or expired. Please try with valid token'
             )
