@@ -15,6 +15,7 @@ def get_user(token_key):
     except Token.DoesNotExist:
         return AnonymousUser()
 
+
 class TokenAuthMiddleware(BaseMiddleware):
     """
     TokenAuthMiddleware to add user to scope.
