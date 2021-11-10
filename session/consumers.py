@@ -170,7 +170,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
         """
         pokerboard = self.session[0].pokerboard
         ticket_id = event['message']['ticket']
-        if self.scope['user'] == pokerboard.manager and Ticket.objects.get(id=ticket_id).status==Ticket.NOTESTIMATED:
+        if self.scope['user'] == pokerboard.manager and Ticket.objects.get(id=ticket_id).status == Ticket.NOTESTIMATED:
             move_ticket_to_last(pokerboard.id, ticket_id)
     
     async def receive(self, text_data=None, bytes_data=None):
@@ -185,15 +185,15 @@ class SessionConsumer(AsyncWebsocketConsumer):
             method_value = serializer.validated_data['method_value']
             fn_name = getattr(self, method_name)
             await fn_name({
-                'type':method_name,
-                'message':method_value
+                'type': method_name,
+                'message': method_value
             })
         except serializers.ValidationError as e:
-            await self.send(text_data=json.dumps({'error':'Something went wrong.'}))
+            await self.send(text_data=json.dumps({'error': 'Something went wrong.'}))
         except json.decoder.JSONDecodeError as e:
-            await self.send(text_data=json.dumps({'error':'invalid json input'}))
+            await self.send(text_data=json.dumps({'error': 'invalid json input'}))
         
-    async def final_estimate(self,event):
+    async def final_estimate(self, event):
         """
         Final estimate of ticket set by manager.
         """
@@ -249,11 +249,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'send.current.ticket',
                     'currentTicket': serializer.data
-                    
                 }
             )
         else:
-            await self.send(text_data=json.dumps({'error':'You do not have permission for this.'}))
+            await self.send(text_data=json.dumps({'error': 'You do not have permission for this.'}))
         
     async def estimate(self, event):
         """
@@ -265,8 +264,8 @@ class SessionConsumer(AsyncWebsocketConsumer):
             await self.send(
                 text_data=json.dumps
                 ({
-                    "message":"Time for the session in over"
-                }),
+                    "message": "Time for the session in over"
+                })
             )
             return
         try:
@@ -295,11 +294,11 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }
             )
         except ValidationError as e:
-            await self.send(text_data=json.dumps({'error':f'{e}'}))
+            await self.send(text_data=json.dumps({'error': f'{e}'}))
         except KeyError as e:
-            await self.send(text_data=json.dumps({'error':f'{e}'}))
+            await self.send(text_data=json.dumps({'error': f'{e}'}))
         except requests.exceptions.HTTPError as e:
-            await self.send(text_data=json.dumps({'error':f'{e}'}))        
+            await self.send(text_data=json.dumps({'error': f'{e}'}))        
 
     async def message_manager(self, event):
         """
@@ -351,7 +350,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }
             )
         else:
-            await self.send(text_data=json.dumps({"error":"Can't start time."}))
+            await self.send(text_data=json.dumps({"error": "Can't start time."}))
 
     async def send_current_ticket(self, event):
         await self.channel_layer.group_send(
@@ -384,6 +383,6 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }
             )
         except requests.exceptions.HTTPError as e:
-            await self.send(text_data=json.dumps({"error":f'{e}'})) 
+            await self.send(text_data=json.dumps({"error": f'{e}'})) 
         except AttributeError as e:
-            await self.send(text_data=json.dumps({"error":f'{e}'}))
+            await self.send(text_data=json.dumps({"error": f'{e}'}))
