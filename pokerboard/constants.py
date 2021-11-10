@@ -31,3 +31,12 @@ SESSION_STATUS_CHOICES = (
     (ONGOING, "ongoing"),
     (HASENDED, "hasended"),
 )
+
+SESSION_METHOD_CHOICES = [
+    'estimate',
+    'start_game',
+    'skip_ticket',
+    'start_timer',
+    'final_estimate', 
+    'get_ticket_details'
+]

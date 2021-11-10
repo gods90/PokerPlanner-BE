@@ -9,6 +9,6 @@ router = DefaultRouter()
 router.register('', SessionViewSet)
 
 urlpatterns = [
-    path('',include(router.urls)),
+    path('', include(router.urls)),
     path("comment/<str:issue_key>", CommentView.as_view(), name="comment")
 ]

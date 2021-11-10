@@ -1,18 +1,16 @@
 from rest_framework import serializers
 
 from pokerboard.models import Pokerboard
-
+from pokerboard.constants import SESSION_METHOD_CHOICES
 from session.models import Session
 
 
 class SessionSerializer(serializers.ModelSerializer):
     """
-    Serializer for session
+    Serializer for session creation.
     """
-    status = serializers.CharField(source='get_status_display', required=False)
-    pokerboard = serializers.PrimaryKeyRelatedField(
-        queryset=Pokerboard.objects.all()
-    )
+    pokerboard = serializers.PrimaryKeyRelatedField(queryset=Pokerboard.objects.all())
+    
     class Meta:
         model = Session
         fields = '__all__'
@@ -21,9 +19,7 @@ class SessionSerializer(serializers.ModelSerializer):
         """
         To validate only one session active at a time of pokerboard.
         """
-        active_session = Session.objects.filter(
-            pokerboard_id=attrs.id, status=Session.ONGOING
-        )
+        active_session = Session.objects.filter(pokerboard_id=attrs.id, status=Session.ONGOING)
         if active_session.exists():
             raise serializers.ValidationError(
                 "An active session already exists for this pokerboard."
@@ -32,7 +28,10 @@ class SessionSerializer(serializers.ModelSerializer):
 
 
 class MethodSerializer(serializers.Serializer):
-    method_name = serializers.ChoiceField(choices=["estimate", "start_game", "skip_ticket", "start_timer", "final_estimate", "get_ticket_details"])
+    """
+    Method serializer to check valid method name and method value is dictionary.
+    """
+    method_name = serializers.ChoiceField(choices=SESSION_METHOD_CHOICES)
     method_value = serializers.DictField()
 
 
@@ -42,4 +41,3 @@ class CommentSerializer(serializers.Serializer):
     """
     comment = serializers.CharField()
     issue = serializers.SlugField()
-

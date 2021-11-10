@@ -29,8 +29,7 @@ INSTALLED_APPS = [
     'group',
     'session',
     'invite',
-    'common',
-    'django_extensions'
+    'common'
 ]
 
 MIDDLEWARE = [
@@ -69,8 +68,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10
 }
-
-# WSGI_APPLICATION = 'pokerplanner.wsgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
@@ -131,6 +128,3 @@ JIRA = Jira(
 
 ASGI_APPLICATION = 'pokerplanner.asgi.application'
 
-INTERNAL_IPS = [
-    '127.0.0.1',
-]

@@ -1,11 +1,8 @@
 from django.db import models
 
 from common.models import Timestamp
-
 from group.models import Group
-
 from pokerboard import constants
-
 from user.models import User
 
 
@@ -49,7 +46,7 @@ class Ticket(Timestamp):
     Model to store ticket detail
     """
     pokerboard = models.ForeignKey(
-        Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.',related_name="tickets"
+        Pokerboard, on_delete=models.CASCADE, help_text='Pokerboard to which ticket belongs.', related_name="tickets"
     )
     ticket_id = models.CharField(
         unique=True, max_length=100, help_text='Ticket ID imported from JIRA.'
