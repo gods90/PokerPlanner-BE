@@ -1,130 +1,130 @@
 import os
-
+from class_settings import Settings
 from atlassian import Jira
 from dotenv import load_dotenv
 
-DEBUG = True
+class MySettings(Settings):
+    DEBUG = True
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-load_dotenv(verbose=True)
-SECRET_KEY = os.environ["SECRET_KEY"]
+    load_dotenv(verbose=True)
+    SECRET_KEY = os.environ["SECRET_KEY"]
+    ALLOWED_HOSTS = []
 
-ALLOWED_HOSTS = []
+    INSTALLED_APPS = [
+        'channels',
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'corsheaders',
+        'rest_framework_swagger',
+        'rest_framework',
+        'rest_framework.authtoken',
+        'user',
+        'pokerboard',
+        'group',
+        'session',
+        'invite',
+        'common',
+        'django_extensions'
+    ]
 
-INSTALLED_APPS = [
-    'channels',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'corsheaders',
-    'rest_framework_swagger',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'user',
-    'pokerboard',
-    'group',
-    'session',
-    'invite',
-    'common'
-]
+    MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'corsheaders.middleware.CorsMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    ]
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+    ROOT_URLCONF = 'pokerplanner.urls'
 
-ROOT_URLCONF = 'pokerplanner.urls'
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [],
+            'APP_DIRS': True,
+            'OPTIONS': {
+                'context_processors': [
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                ],
+            },
         },
-    },
-]
+    ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
-}
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("localhost", 6379)],
-        },
-    },
-}
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.environ['DATABASE_NAME'],
-        "USER": os.environ['DATABASE_USERNAME'],
-        "PASSWORD": os.environ['DATABASE_PASSWORD'],
-        "HOST": "localhost",
-        "PORT": ""
+    REST_FRAMEWORK = {
+        'DEFAULT_AUTHENTICATION_CLASSES': [
+            'rest_framework.authentication.TokenAuthentication',
+        ],
+        'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+        'PAGE_SIZE': 10
     }
-}
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(os.environ["REDIS_HOST"], os.environ["REDIS_PORT"])],
+            },
+        },
+    }
 
-LANGUAGE_CODE = 'en-us'
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": os.environ['DATABASE_NAME'],
+            "USER": os.environ['DATABASE_USERNAME'],
+            "PASSWORD": os.environ['DATABASE_PASSWORD'],
+            "HOST": "localhost",
+            "PORT": ""
+        }
+    }
 
-TIME_ZONE = 'UTC'
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        },
+    ]
 
-USE_I18N = True
+    LANGUAGE_CODE = 'en-us'
 
-USE_L10N = True
+    TIME_ZONE = 'UTC'
 
-USE_TZ = True
+    USE_I18N = True
 
-STATIC_URL = '/static/'
+    USE_L10N = True
 
-AUTH_USER_MODEL = "user.User"
+    USE_TZ = True
 
-CORS_ALLOW_ALL_ORIGINS = True
+    STATIC_URL = '/static/'
 
-JIRA = Jira(
-    url=os.environ['JIRA_URL'],
-    username=os.environ['JIRA_USERNAME'],
-    password=os.environ['JIRA_PASSWORD']
-)
+    AUTH_USER_MODEL = "user.User"
 
-ASGI_APPLICATION = 'pokerplanner.asgi.application'
+    CORS_ALLOW_ALL_ORIGINS = True
 
+    JIRA = Jira(
+        url=os.environ['JIRA_URL'],
+        username=os.environ['JIRA_USERNAME'],
+        password=os.environ['JIRA_PASSWORD']
+    )
+
+    ASGI_APPLICATION = 'pokerplanner.asgi.application'

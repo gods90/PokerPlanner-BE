@@ -15,7 +15,7 @@ from pokerboard.models import Pokerboard, Ticket
 from pokerplanner import settings
 from session.models import Session
 from session.serializers import MethodSerializer
-from session.utils import checkEstimateValue, set_user_estimates, move_ticket_to_last
+from session.utils import check_estimate_value, set_user_estimates, move_ticket_to_last
 from user.serializer.serializers import UserSerializer
 
 
@@ -184,7 +184,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
         deck_type = session.pokerboard.estimation_type
         ticket_key = event['message']['ticket_key']
         estimate = event['message']['estimate']
-        if not checkEstimateValue(deck_type, estimate):
+        if not check_estimate_value(deck_type, estimate):
             raise ValidationError('Invalid estimate value')
         if self.scope['user'] == self.pokerboard_manager:
             jira = settings.JIRA
@@ -211,7 +211,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
         try:
             ticket_key = event['message']['ticket_key']
             estimate = event['message']['estimate']
-            if not checkEstimateValue(deck_type, estimate):
+            if not check_estimate_value(deck_type, estimate):
                 raise ValidationError('Invalid estimate value')
             
             await self.channel_layer.group_send(

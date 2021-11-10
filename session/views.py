@@ -3,7 +3,8 @@ from rest_framework.generics import CreateAPIView, get_object_or_404, RetrieveAP
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from pokerplanner.settings import JIRA
+from django.conf import settings
+
 from session.models import Session
 from session.serializers import CommentSerializer, SessionSerializer
 
@@ -36,7 +37,7 @@ class CommentView(CreateAPIView,RetrieveAPIView):
         """
         Get comments on a JIRA ticket
         """
-        response = JIRA.get_issue(issue_key)['fields']['comment']
+        response = settings.JIRA.get_issue(issue_key)['fields']['comment']
         all_comments = {}
         all_comments["comments"] = []
         for res in response["comments"]:
@@ -55,6 +56,6 @@ class CommentView(CreateAPIView,RetrieveAPIView):
         serializer.is_valid(raise_exception=True)
         issue = serializer.validated_data["issue"]
         comment = serializer.validated_data["comment"]
-        JIRA.issue_add_comment(issue, comment)
+        settings.JIRA.issue_add_comment(issue, comment)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers) 
