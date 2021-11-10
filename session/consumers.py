@@ -364,10 +364,12 @@ class TestConsumer(AsyncWebsocketConsumer):
                 }
             }
         )
-        return 
+        return
 
     async def get_ticket_details(self, event):
         try:
+            data = getattr(self.channel_layer,self.room_name,{})
+            self.currentTicket = data['currentTicket']
             ticket_key = self.currentTicket.ticket_id
             jira = settings.JIRA
             ticket = jira.get_issue(ticket_key,fields=["summary","description"])
@@ -383,5 +385,6 @@ class TestConsumer(AsyncWebsocketConsumer):
                 }
             )
         except requests.exceptions.HTTPError as e:
-            await self.send(text_data=json.dumps({"error":f'{e}'}))        
-
+            await self.send(text_data=json.dumps({"error":f'{e}'})) 
+        except AttributeError as e:
+            await self.send(text_data=json.dumps({"error":f'{e}'}))
