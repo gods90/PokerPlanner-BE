@@ -2,6 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework.generics import CreateAPIView, get_object_or_404, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import serializers
+
+from pokerboard.models import Ticket
 
 from pokerplanner.settings import JIRA
 from session.models import Session
@@ -22,8 +25,25 @@ class SessionViewSet(viewsets.ModelViewSet):
         To get the active session of the pokerboard.
         """
         session_id = self.kwargs["pk"]
-        active_session = get_object_or_404(Session, id=session_id, status=Session.ONGOING)
+        active_session = get_object_or_404(Session, id=session_id,status=Session.ONGOING)
         return active_session
+
+    def create(self, request, *args, **kwargs):
+        tickets = request.data['tickets']
+        tickets.sort(key = lambda x : x['order'])
+        for ind, ticket in enumerate(tickets):
+            if ind > 0 and tickets[ind]['order'] == tickets[ind-1]['order']:
+                raise serializers.ValidationError('Invalid ordering!')
+        
+        ticket_queryset = []
+        for ticket in tickets:
+            ticket_ = get_object_or_404(Ticket, ticket_id=ticket['ticket_id'])
+            ticket_.order = ticket['order']
+            ticket_queryset.append(ticket_)
+        
+        res = super().create(request, *args, **kwargs)
+        Ticket.objects.bulk_update(ticket_queryset, ['order'])
+        return res
 
 
 class CommentView(CreateAPIView,RetrieveAPIView):

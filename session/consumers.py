@@ -92,8 +92,8 @@ class SessionConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'start_game',
             }
-        )
-        
+        )        
+
     async def disconnect(self, code):
         """
         Runs when connection is closed.
@@ -183,7 +183,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
         session = Session.objects.get(id=self.scope['url_route']['kwargs']['session_id'])
         deck_type = session.pokerboard.estimation_type
         ticket_key = event['message']['ticket_key']
-        estimate = event['message']['estimate']
+        estimate = int(event['message']['estimate'])
         if not check_estimate_value(deck_type, estimate):
             raise ValidationError('Invalid estimate value')
         if self.scope['user'] == self.pokerboard_manager:
@@ -210,7 +210,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
         deck_type = session.pokerboard.estimation_type
         try:
             ticket_key = event['message']['ticket_key']
-            estimate = event['message']['estimate']
+            estimate = int(event['message']['estimate'])
             if not check_estimate_value(deck_type, estimate):
                 raise ValidationError('Invalid estimate value')
             
@@ -257,8 +257,9 @@ class SessionConsumer(AsyncWebsocketConsumer):
         self.estimates = {}
         self.timer = datetime.now()
         if self.scope['user'] == self.pokerboard_manager and self.session[0].status == Session.ONGOING:
-            self.session.first().time_started_at = timezone.now()
-            self.session.first().save()
+            session = self.session.first()
+            session.time_started_at = timezone.now()
+            session.save()
             # Send message to personal group
             await self.channel_layer.group_send(
                 self.room_group_name ,

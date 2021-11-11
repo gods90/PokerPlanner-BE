@@ -2,10 +2,8 @@ import requests
 
 from rest_framework import serializers, status
 
-from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
-
 from pokerplanner import settings
-
+from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 from user.models import User
 
 
@@ -151,6 +149,21 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
         validated_data.pop('tickets', None)
         validated_data.pop('jql', None)
         ticket_responses = self.data['ticket_responses']
+        new_pokerboard = {key: val for key, val in self.data.items() if key not in [
+            'sprint_id', 'tickets', 'jql']}
+        ticket_responses = new_pokerboard.pop('ticket_responses')
+
+        valid_tickets = 0
+        for ticket_response in ticket_responses:
+            valid_tickets += ticket_response['status_code'] == status.HTTP_200_OK
+
+        if valid_tickets == 0:
+            raise serializers.ValidationError('Invalid tickets!')
+
+        manager = User.objects.get(id=new_pokerboard["manager"])
+        new_pokerboard["manager"] = manager
+        pokerboard = Pokerboard(**new_pokerboard)
+        pokerboard.save()
 
         ticket_responses = [
             (
