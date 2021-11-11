@@ -1,6 +1,5 @@
+from django.conf import settings
 from rest_framework import serializers
-
-from group.models import Group
 
 from invite.models import Invite
 from invite.tasks import send_invite_email_task
@@ -8,7 +7,11 @@ from invite.tasks import send_invite_email_task
 from pokerboard import constants
 from pokerboard.models import Pokerboard
 
+from group.models import Group
+
 from user.models import User
+
+import jwt
 
 
 class InviteSerializer(serializers.ModelSerializer):
@@ -36,12 +39,16 @@ class InviteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Invite already accepted!')
         return super().validate(attrs)
     
-    
+
+
 class InviteCreateSerializer(serializers.Serializer):
     """
     Serializer to create new invite to pokerboard
     """
-    group = serializers.PrimaryKeyRelatedField(
+    pokerboard = serializers.PrimaryKeyRelatedField(
+        queryset=Pokerboard.objects.all()
+    )
+    group_id = serializers.PrimaryKeyRelatedField(
         queryset=Group.objects.all(), required=False
     )
     email = serializers.EmailField(required=False)
@@ -53,19 +60,24 @@ class InviteCreateSerializer(serializers.Serializer):
         pokerboard_id = self.context['view'].kwargs['pokerboard_id']
         pokerboard = Pokerboard.objects.select_related('manager').get(id=pokerboard_id)
         self.context['view'].kwargs['pokerboard'] = pokerboard
-        users = []
         if 'group' in attrs.keys():
             group = attrs['group']
             users = group.users.all()
 
         elif 'email' in attrs.keys():
-            try:
-                user = User.objects.get(email=attrs['email'])
-                users.append(user)
-            except User.DoesNotExist as e:
+            users = User.objects.filter(email=attrs['email'])
+            if not users.exists():
                 pokerboard_manager_email = pokerboard.manager.email
-                send_invite_email_task.delay(pokerboard_manager_email, attrs['email'])
-                raise serializers.ValidationError("Email to signup in pokerplanner has been sent.Please check your email.")
+                invite = Invite.objects.filter(
+                    email=attrs['email'], pokerboard_id=pokerboard.id
+                )
+                if not invite.exists():
+                    # TODO Resend token if token expired.
+                    invite = Invite.objects.create(**attrs)
+                    send_invite_email_task.delay(
+                        pokerboard_manager_email, [attrs['email']], invite.id
+                    )
+                raise serializers.ValidationError('Invitation to pokerboard will be sent.')
         else:
             raise serializers.ValidationError('Provide group_id/email!')
 
@@ -86,9 +98,9 @@ class InviteCreateSerializer(serializers.Serializer):
                     
         return attrs
     
+
     def create(self, attrs):
         pokerboard = self.context['view'].kwargs['pokerboard']
-        users = []
         if 'group' in attrs.keys():
             group = attrs['group']
             users = group.users.all()
@@ -100,20 +112,20 @@ class InviteCreateSerializer(serializers.Serializer):
         user_role = attrs.get('user_role', constants.PLAYER)
         users_invited = []
         softdeleted_invites = Invite.objects.select_related('user').filter(
-            pokerboard_id=pokerboard.id, user__in=users
+            pokerboard_id=pokerboard.id, email__in=[user.email for user in users]
         )
         
         for softdeleted_invite in softdeleted_invites:
             softdeleted_invite.group = group
             softdeleted_invite.user_role = user_role
             softdeleted_invite.status = constants.PENDING
-            users_invited.append(softdeleted_invite.user.id)
+            users_invited.append(softdeleted_invite.user.email)
             
-        remaining_users = users.exclude(id__in=users_invited)
+        remaining_users = users.exclude(email__in=users_invited)
         Invite.objects.bulk_create(
             [
                 Invite(
-                    pokerboard_id=pokerboard.id, user=user,
+                    pokerboard_id=pokerboard.id, email=user.email,
                     group=group, user_role=user_role
                 ) for user in remaining_users
             ]
@@ -121,4 +133,29 @@ class InviteCreateSerializer(serializers.Serializer):
         Invite.objects.bulk_update(
             softdeleted_invites, ['group', 'user_role', 'status']
         )
+        return attrs
+
+
+class InviteSignupSerializer(serializers.Serializer):
+    """
+    Serializer to validate jwt token sent on mail
+    """
+    jwt_token = serializers.CharField()
+
+    def validate_jwt_token(self, attrs):
+        try:
+            payload = jwt.decode(attrs, settings.SECRET_KEY,
+                                 settings.JWT_HASHING_ALGORITHM)
+        except Exception as e:
+            raise serializers.ValidationError(
+                'Token either invalid or expired. Please try with valid token'
+            )
+
+        invite_id = payload['invite_id']
+        invite = Invite.objects.filter(id=invite_id).first()
+        if not invite or invite.status != constants.PENDING:
+            raise serializers.ValidationError(
+                'Token either invalid or expired. Please try with valid token'
+            )
+        self.context['invite'] = invite
         return attrs

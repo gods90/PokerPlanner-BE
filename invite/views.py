@@ -1,13 +1,17 @@
 from rest_framework import status, viewsets
+from rest_framework import generics, status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from invite.models import Invite
 from invite.serializer import InviteCreateSerializer, InviteSerializer
 from invite.permissions import PokerboardInviteCustomPermissions
+from invite.serializer import InviteSerializer, InviteCreateSerializer, InviteSignupSerializer
 
 from pokerboard import constants
 from pokerboard.serializers import PokerboardUserGroupSerializer
+
+from user.models import User
 
 
 class InviteViewSet(viewsets.ModelViewSet):
@@ -18,7 +22,7 @@ class InviteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, PokerboardInviteCustomPermissions]
 
     def get_queryset(self):
-        return Invite.objects.filter(user_id=self.request.user.id, status = constants.PENDING)
+        return Invite.objects.filter(email=self.request.user.email, status=constants.PENDING)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -50,3 +54,24 @@ class InviteViewSet(viewsets.ModelViewSet):
         invite.save()
         serializer = InviteSerializer(instance=invite)
         return Response(data=serializer.data)
+
+
+class ValidateInviteView(generics.RetrieveAPIView):
+    """
+    View to validate jwt token sent on mail to join pokerboard
+    """
+
+    def retrieve(self, request, *args, **kwargs):
+        jwt_token = request.GET.get('token', '')
+        serializer = InviteSignupSerializer(data={'jwt_token': jwt_token})
+        serializer.is_valid(raise_exception=True)
+        invite = serializer.context['invite']
+        user = User.objects.filter(email=invite.email).first()
+        if user is None:
+            return Response(data={'message': 'User not signed up.', 'isUserSignedUp': False})
+        else:
+            user = request.user
+            if request.user.is_authenticated and user.email == invite.email:
+                return Response(data={'isUserSignedUp': True, 'isSameUser': True})
+            else:
+                return Response(data={'isUserSignedUp': True, 'isSameUser': False})
