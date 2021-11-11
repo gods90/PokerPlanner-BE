@@ -18,7 +18,6 @@ def send_welcome_mail(first_name, last_name, recipient):
         'welcome_email.html', context
     )
     plain_text_body = strip_tags(html_body)
-    print(email_subject)
     send_mail(
         subject=email_subject, message=plain_text_body, from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=recipient, html_message=html_body, fail_silently=True
