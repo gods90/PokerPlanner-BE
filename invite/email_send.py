@@ -29,7 +29,7 @@ def send_invite_mail(manager_email, recipient, invite_id):
     )
     plain_text_body = strip_tags(html_body)
     try:
-        send_mail(
+        return send_mail(
             email_subject, plain_text_body, settings.DEFAULT_FROM_EMAIL, recipient, html_message=html_body
         )
     except SMTPException:

@@ -45,9 +45,6 @@ class InviteCreateSerializer(serializers.Serializer):
     """
     Serializer to create new invite to pokerboard
     """
-    pokerboard = serializers.PrimaryKeyRelatedField(
-        queryset=Pokerboard.objects.all()
-    )
     group_id = serializers.PrimaryKeyRelatedField(
         queryset=Group.objects.all(), required=False
     )
@@ -73,6 +70,7 @@ class InviteCreateSerializer(serializers.Serializer):
                 )
                 if not invite.exists():
                     # TODO Resend token if token expired.
+                    attrs['pokerboard_id'] = pokerboard.id
                     invite = Invite.objects.create(**attrs)
                     send_invite_email_task.delay(
                         pokerboard_manager_email, [attrs['email']], invite.id
@@ -82,13 +80,13 @@ class InviteCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError('Provide group_id/email!')
 
         accepted_invites = Invite.objects.filter(
-            pokerboard=pokerboard.id, status=constants.ACCEPTED, user__in=[user.id for user in users]
+            pokerboard=pokerboard.id, status=constants.ACCEPTED, email__in=[user.email for user in users]
         )
         if accepted_invites.exists():
             raise serializers.ValidationError('Already part of pokerboard')
         
         pending_invites = Invite.objects.filter(
-            pokerboard=pokerboard.id, status=constants.PENDING, user__in=[user.id for user in users]
+            pokerboard=pokerboard.id, status=constants.PENDING, email__in=[user.email for user in users]
         )
         if pending_invites.exists():
             raise serializers.ValidationError('Invite already sent!')

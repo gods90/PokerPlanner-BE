@@ -27,7 +27,7 @@ class PokerBoardViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = Pokerboard.objects.filter(Q(manager=self.request.user) |
-                                         Q(invite__user=self.request.user,
+                                         Q(invite__email=self.request.user.email,
                                           invite__status=constants.ACCEPTED)).distinct()
         return user
 

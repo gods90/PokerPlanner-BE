@@ -7,5 +7,5 @@ urlpatterns = [
          InviteViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update', 'delete': 'destroy'})),
     path('invite/', InviteViewSet.as_view({'get': 'list'})),
     path('pokerboard/<int:pokerboard_id>/invite/', InviteViewSet.as_view({'post' : 'create'})),
-    path('validate', ValidateInviteView.as_view())
+    path('invite/validate/', ValidateInviteView.as_view())
 ]
