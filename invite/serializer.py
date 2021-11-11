@@ -24,7 +24,7 @@ class InviteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invite
-        fields = ['id', 'status', 'pokerboard', 'user', 'group', 'user_role', 'pokerboard_title']
+        fields = ['id', 'status', 'pokerboard', 'email', 'group', 'user_role', 'pokerboard_title']
         extra_kwargs = {
             'pokerboard': {'read_only': True},
             'user': {'read_only': True},
