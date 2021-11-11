@@ -67,11 +67,14 @@ class ValidateInviteView(generics.RetrieveAPIView):
         serializer.is_valid(raise_exception=True)
         invite = serializer.context['invite']
         user = User.objects.filter(email=invite.email).first()
+        if request.user.is_authenticated:
+            logged_in_user = request.user.email 
+            msg = f'{logged_in_user} has been logged out.'
         if user is None:
-            return Response(data={'message': 'User not signed up.', 'isUserSignedUp': False})
+            return Response(data={'message': f'{msg}', 'isUserSignedUp': False})
         else:
             user = request.user
             if request.user.is_authenticated and user.email == invite.email:
                 return Response(data={'isUserSignedUp': True, 'isSameUser': True})
             else:
-                return Response(data={'isUserSignedUp': True, 'isSameUser': False})
+                return Response(data={'message': f'{msg}.', 'isUserSignedUp': True, 'isSameUser': False})
