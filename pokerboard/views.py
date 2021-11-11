@@ -128,7 +128,7 @@ class TicketViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Creat
     View for getting all tickets and add tickets in the pokerboard.
     """  
     pagination_class = None
-    permission_classes = [IsAuthenticated, PokerboardCustomPermissions]
+    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.action == 'list':

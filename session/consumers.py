@@ -179,11 +179,13 @@ class SessionConsumer(AsyncWebsocketConsumer):
         """
         try:
             data_json = json.loads(text_data)
+            print(data_json)
             serializer = MethodSerializer(data=data_json)
             serializer.is_valid(raise_exception=True)
             method_name = serializer.validated_data['method_name']
             method_value = serializer.validated_data['method_value']
             fn_name = getattr(self, method_name)
+            print(fn_name)
             await fn_name({
                 'type': method_name,
                 'message': method_value
@@ -213,7 +215,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'broadcast',
-                    'data': f"Final estimate of {ticket_key} is {estimate}"
+                    'data': {
+                        "message": f"Final estimate of {ticket_key} is {estimate}",
+                        "context": 'Final Estimate'
+                    }
                 }
             )
             data = getattr(self.channel_layer, self.room_name, {})
@@ -252,7 +257,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }
             )
         else:
-            await self.send(text_data=json.dumps({'error': 'You do not have permission for this.'}))
+             await self.send(text_data=json.dumps({
+                'message': 'You dont have permission to this action.',
+                'context': 'error'
+            }))
         
     async def estimate(self, event):
         """
@@ -264,7 +272,8 @@ class SessionConsumer(AsyncWebsocketConsumer):
             await self.send(
                 text_data=json.dumps
                 ({
-                    "message": "Time for the session in over"
+                    "message": "Time for the session is over",
+                    "context": "error"
                 })
             )
             return
@@ -315,12 +324,12 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }),
             )
         except AttributeError as e:
-            user_room_name = f"{self.room_name}_user_{event['id']}"
-            await self.channel_layer.group_send(
-                user_room_name,
-                {
-                    "message": "Timer not started yet"
-                }
+            await self.send(
+                text_data=json.dumps
+                ({
+                    "message": "Timer not started yet",
+                    "context": "error"
+                })
             )
 
     async def start_timer(self, event):
@@ -390,15 +399,21 @@ class SessionConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"error": f'{e}'}))
 
     async def end_session(self, event):
-        session = self.session.first()
-        session.status = constants.HASENDED
-        session.save()
-        await self.channel_layer.group_send(
-            self.room_group_name ,
-            {
-                'type': 'broadcast',
-                'data': {
-                    'context': 'Session Ended'
+        if self.scope['user'] == self.pokerboard_manager:
+            session = self.session.first()
+            session.status = constants.HASENDED
+            session.save()
+            await self.channel_layer.group_send(
+                self.room_group_name ,
+                {
+                    'type': 'broadcast',
+                    'data': {
+                        'context': 'Session Ended'
+                    }
                 }
-            }
-        )
+            )
+        else:
+            await self.send(text_data=json.dumps({
+                'message': 'You dont have permission for this action.',
+                'context': 'error'
+            }))
