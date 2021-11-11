@@ -16,7 +16,7 @@ from pokerboard.models import Pokerboard, Ticket
 from pokerboard.serializers import TicketSerializer
 from session.models import Session
 from session.serializers import MethodSerializer
-from session.utils import checkEstimateValue, set_user_estimates, move_ticket_to_last, get_current_ticket
+from session.utils import check_estimate_value, set_user_estimates, move_ticket_to_last, get_current_ticket
 from user.serializers import UserSerializer
 
 
@@ -202,7 +202,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
         ticket_key = self.currentTicket.ticket_id
         estimate = int(event["message"]["estimate"])
         
-        if not checkEstimateValue(deck_type, estimate):
+        if not check_estimate_value(deck_type, estimate):
             raise ValidationError("Invalid estimate value")
         
         if self.scope['user'] == self.pokerboard_manager:
@@ -271,7 +271,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
         try:
             ticket_key = self.currentTicket.ticket_id
             estimate = int(event["message"]["estimate"])
-            if not checkEstimateValue(deck_type, estimate):
+            if not check_estimate_value(deck_type, estimate):
                 raise ValidationError("Invalid estimate value")
             
             await self.channel_layer.group_send(
@@ -366,12 +366,14 @@ class SessionConsumer(AsyncWebsocketConsumer):
 
     async def get_ticket_details(self, event):
         try:
+            # import pdb
+            # pdb.set_trace()
             data = getattr(self.channel_layer, self.room_name, {})
             self.currentTicket = data['currentTicket']
             ticket_key = self.currentTicket.ticket_id
             jira = settings.JIRA
             ticket = jira.get_issue(ticket_key, fields=["summary", "description"])
-            # Send message to personal group
+            
             await self.channel_layer.group_send(
                 self.room_group_name ,
                 {
@@ -386,3 +388,17 @@ class SessionConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"error": f'{e}'})) 
         except AttributeError as e:
             await self.send(text_data=json.dumps({"error": f'{e}'}))
+
+    async def end_session(self, event):
+        session = self.session.first()
+        session.status = constants.HASENDED
+        session.save()
+        await self.channel_layer.group_send(
+            self.room_group_name ,
+            {
+                'type': 'broadcast',
+                'data': {
+                    'context': 'Session Ended'
+                }
+            }
+        )

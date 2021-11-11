@@ -26,7 +26,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         To get the active session of the pokerboard.
         """
         session_id = self.kwargs["pk"]
-        active_session = get_object_or_404(Session, id=session_id, status=Session.ONGOING)
+        active_session = get_object_or_404(Session, id=session_id, status=constants.ONGOING)
         return active_session
 
     def create(self, request, *args, **kwargs):
@@ -79,5 +79,3 @@ class CommentView(CreateAPIView,RetrieveAPIView):
         JIRA.issue_add_comment(issue, comment)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers) 
-        
-

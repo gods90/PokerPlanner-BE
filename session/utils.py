@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 from django.db.models import Max
+from pokerboard import constants
 
 from pokerboard import constants
 from pokerboard.models import Pokerboard, Ticket
@@ -13,7 +14,7 @@ def move_ticket_to_last(pokerboard: int, pk: int) -> None:
     """
     highest_order_of_all_non_estimated_tickets = Ticket.objects.filter(pokerboard__id=pokerboard,status=Ticket.NOTESTIMATED).aggregate(Max('order'))
     ticket = Ticket.objects.get(id=pk)
-    ticket.order = highest_order_of_all_non_estimated_tickets["order__max"] + 1
+    ticket.order = highest_order_of_all_non_estimated_tickets['order__max'] + 1
     ticket.save()
     
 def check_estimate_value(deck_type: int, estimateValue: int) -> bool:
