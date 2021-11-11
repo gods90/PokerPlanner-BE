@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.generics import CreateAPIView, get_object_or_404, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from pokerboard import constants
 
+from pokerboard import constants
 from pokerplanner.settings import JIRA
 from session.models import Session
 from session.serializers import CommentSerializer, SessionSerializer

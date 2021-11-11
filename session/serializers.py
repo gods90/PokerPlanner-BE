@@ -11,15 +11,11 @@ class SessionSerializer(serializers.ModelSerializer):
     Serializer for session creation.
     """
     pokerboard = serializers.PrimaryKeyRelatedField(queryset=Pokerboard.objects.all())
+    status = serializers.CharField(source='get_status_display')
     
     class Meta:
         model = Session
         fields = '__all__'
-
-    def to_representation(self, instance):
-        repr = super().to_representation(instance)
-        repr["status"] =  constants.SESSION_STATUS_CHOICES[repr["status"]][1]
-        return repr
     
     def validate_pokerboard(self, attrs):
         """

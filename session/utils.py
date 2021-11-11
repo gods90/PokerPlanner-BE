@@ -54,7 +54,7 @@ def set_user_estimates(user_estimates: Dict, ticket_key: str) -> None:
 def get_current_ticket(session_id: int) -> object:
         session = Session.objects.select_related('pokerboard').get(id=session_id)
         pokerboard_id = session.pokerboard
-        currentTicketID = Ticket.objects.filter(
+        current_ticket_id = Ticket.objects.filter(
             pokerboard_id=pokerboard_id, status=constants.NOTESTIMATED
         ).order_by('order')
-        return currentTicketID.first()
+        return current_ticket_id.first()
