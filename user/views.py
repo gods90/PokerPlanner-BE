@@ -1,4 +1,4 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -6,6 +6,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from user.models import User
 from user.serializers import (ChangePasswordSerializer,
                                          UserSerializer)
+from user.tasks import send_welcome_mail_task
 
 
 class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView):
@@ -28,6 +29,12 @@ class UserViewSet(generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView)
         if self.request.method in ['POST']:
             return []
         return [IsAuthenticated()]
+    
+    def create(self, request, *args, **kwargs):
+        res = super().create(request, *args, **kwargs)
+        if res.status_code == status.HTTP_201_CREATED:
+            send_welcome_mail_task.delay(res.data['first_name'], res.data.get('last_name', ''), [res.data['email']])
+        return res
 
 
 
