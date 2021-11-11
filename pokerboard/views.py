@@ -54,13 +54,14 @@ class PokerboardMemberViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         pokerboard_id = self.kwargs['pokerboard_id']
         pokerboard_member = PokerboardUserGroup.objects.filter(
-            pokerboard_id=pokerboard_id)
+            pokerboard_id=pokerboard_id
+        )
         serializer = PokerboardMembersSerializer(pokerboard_member, many=True)
         return Response(status=status.HTTP_200_OK, data=serializer.data)
 
     def perform_destroy(self, instance):
         invite = Invite.objects.get(
-            user_id=instance.user.id, pokerboard_id=instance.pokerboard.id
+            email=instance.user.email, pokerboard_id=instance.pokerboard.id
         )
         invite.status = constants.DECLINED
         invite.save()
@@ -94,7 +95,8 @@ class PokerboardGroupViewSet(viewsets.ModelViewSet):
         if len(pokerboard_members) == 0:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         invites = Invite.objects.filter(
-            pokerboard_id=pokerboard_id, group_id=group_id)
+            pokerboard_id=pokerboard_id, group_id=group_id
+        )
         invites.all().update(status=constants.DECLINED)
         pokerboard_members.all().delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -103,7 +105,8 @@ class PokerboardGroupViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False)
         pokerboard_members = self.get_queryset()
         serializer = PokerboardMembersSerializer(
-            pokerboard_members, data=request.data, partial=partial, many=True)
+            pokerboard_members, data=request.data, partial=partial, many=True
+        )
         serializer.is_valid(raise_exception=True)
         pokerboard_members.all().update(user_role=request.data['user_role'])
         return Response(serializer.data)
