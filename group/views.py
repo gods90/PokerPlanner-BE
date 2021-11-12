@@ -68,4 +68,7 @@ class GroupFindViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     queryset = Group.objects.all()
     serializer_class = GroupFindSerializer
     permission_classes = [IsAuthenticated]
-    search_fields = ['^name']
+
+    def get_queryset(self):
+        query = self.request.GET.get('search', '')
+        return Group.objects.filter(name__startswith=query)
