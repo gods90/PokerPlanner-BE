@@ -6,9 +6,10 @@ from rest_framework.response import Response
 from group.models import Group
 from group.permissions import (GroupCustomPermissions,
                                GroupRemoveMemberCustomPermissions)
-from group.serializers import (GroupMemberDeleteSerializer,
-                                          GroupSerializer,
-                                          GroupUpdateSerializer)
+from group.serializers import (GroupFindSerializer,
+                               GroupMemberDeleteSerializer,
+                               GroupSerializer,
+                               GroupUpdateSerializer)
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -40,8 +41,8 @@ class GroupMemberDeleteViewSet(viewsets.GenericViewSet, mixins.DestroyModelMixin
     """
     View to remove user from a group.
     """
-    permission_classes=[IsAuthenticated, GroupRemoveMemberCustomPermissions]
-    
+    permission_classes = [IsAuthenticated, GroupRemoveMemberCustomPermissions]
+
     def get_queryset(self):
         group = get_object_or_404(Group, id=self.kwargs['group_id'])
         return group.users.all()
@@ -58,3 +59,13 @@ class GroupMemberDeleteViewSet(viewsets.GenericViewSet, mixins.DestroyModelMixin
         serializer.is_valid(raise_exception=True)
         group.users.remove(user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GroupFindViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    """
+    View to find group by name
+    """
+    queryset = Group.objects.all()
+    serializer_class = GroupFindSerializer
+    permission_classes = [IsAuthenticated]
+    search_fields = ['^name']
