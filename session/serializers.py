@@ -1,9 +1,10 @@
 from django.db.models.expressions import Case, Value, When
 
 from rest_framework import serializers
+from pokerboard import constants
 
 from pokerboard.models import Pokerboard, Ticket
-
+from pokerboard.constants import SESSION_METHOD_CHOICES
 from session.models import Session
 
 class TicketSerializerSessionCreate(serializers.Serializer):
@@ -45,7 +46,7 @@ class SessionSerializer(serializers.ModelSerializer):
         To validate only one session active at a time of pokerboard.
         """
         active_session = Session.objects.filter(
-            pokerboard_id=attrs.id, status=Session.ONGOING
+            pokerboard_id=attrs.id, status=constants.ONGOING
         )
         if active_session.exists():
             raise serializers.ValidationError(
@@ -69,9 +70,7 @@ class MethodSerializer(serializers.Serializer):
     """
     Method serializer to check valid method name and method value is dictionary.
     """
-    method_name = serializers.ChoiceField(
-        choices=["estimate", "start_game", "skip_ticket", "start_timer", "final_estimate"]
-    )
+    method_name = serializers.ChoiceField(choices=SESSION_METHOD_CHOICES)
     method_value = serializers.DictField()
 
 

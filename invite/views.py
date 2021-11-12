@@ -70,6 +70,8 @@ class ValidateInviteView(generics.RetrieveAPIView):
         if request.user.is_authenticated:
             logged_in_user = request.user.email 
             msg = f'{logged_in_user} has been logged out.'
+        else:
+            msg = ''
         if user is None:
             return Response(data={'message': f'{msg}', 'isUserSignedUp': False})
         else:

@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from pokerboard.models import Ticket
 
+from pokerboard import constants
 from pokerplanner.settings import JIRA
 from session.models import Session
 from session.serializers import CommentSerializer, SessionSerializer
@@ -25,7 +26,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         To get the active session of the pokerboard.
         """
         session_id = self.kwargs["pk"]
-        active_session = get_object_or_404(Session, id=session_id,status=Session.ONGOING)
+        active_session = get_object_or_404(Session, id=session_id, status=constants.ONGOING)
         return active_session
 
     def create(self, request, *args, **kwargs):
