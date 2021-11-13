@@ -1,10 +1,14 @@
 import re 
 
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import manager
+from django.db.models.query_utils import Q
 
 from rest_framework import serializers
 
 from group.models import Group
+from pokerboard import constants
+from pokerboard.models import Pokerboard
 from user.models import User
 
 
@@ -14,10 +18,12 @@ class UserSerializer(serializers.ModelSerializer):
     Serializer for user
     """
     groups = serializers.SerializerMethodField()
+    pokerboards =serializers.SerializerMethodField()
+    
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
-                  'password', 'first_name', 'last_name','groups']
+                  'password', 'first_name', 'last_name', 'groups', 'pokerboards']
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -28,6 +34,14 @@ class UserSerializer(serializers.ModelSerializer):
         serializer = GetGroupSerializer(res, many=True)
         return serializer.data
 
+    def get_pokerboards(self, user):
+        from pokerboard.serializers import PokerboardSerializer
+        res = Pokerboard.objects.filter(
+                Q(manager=user)| Q(invite__user=user,invite__status=constants.ACCEPTED
+            )).distinct()
+        serializer = PokerboardSerializer(res, many=True)
+        return serializer.data
+        
     def create(self, validated_data):
         """
         Overriding create method to hash password and then save.

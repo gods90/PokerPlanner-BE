@@ -110,4 +110,4 @@ class GetGroupSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Group
-        fields = ["name"]
+        fields = ['name','id']
