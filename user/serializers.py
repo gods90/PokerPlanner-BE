@@ -2,6 +2,7 @@ import jwt
 import re 
 
 from rest_framework import serializers
+from rest_framework.authtoken.models import Token
 
 from django.contrib.auth.password_validation import validate_password
 from django.conf import settings
@@ -19,11 +20,12 @@ class UserSerializer(serializers.ModelSerializer):
     """
     groups = serializers.SerializerMethodField()
     invite_id = serializers.CharField(required=False, write_only=True)
+    token = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
-                  'password', 'first_name', 'last_name', 'groups', 'invite_id']
+                  'password', 'first_name', 'last_name', 'groups', 'invite_id', 'token']
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -54,6 +56,10 @@ class UserSerializer(serializers.ModelSerializer):
         res = Group.objects.filter(users__in=[user])
         serializer = GetGroupSerializer(res, many=True)
         return serializer.data
+    
+    def get_token(self, user):
+        token, _ = Token.objects.get_or_create(user_id=user.id)
+        return token.key
 
     def create(self, validated_data):
         """

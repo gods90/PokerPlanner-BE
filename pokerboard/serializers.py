@@ -162,8 +162,6 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
         manager = User.objects.get(id=new_pokerboard["manager"])
         new_pokerboard["manager"] = manager
-        pokerboard = Pokerboard(**new_pokerboard)
-        pokerboard.save()
 
         ticket_responses = [
             (

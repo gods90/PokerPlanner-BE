@@ -7,7 +7,7 @@ from pokerboard.views import (
 
 router = DefaultRouter()
 router.register('(?P<pokerboard_id>\d+)/members', PokerboardMemberViewSet, basename="members")
-router.register('(?P<pokerboard_id>\d+)/groups', PokerboardGroupViewSet, basename="groups")
+router.register('(?P<pokerboard_id>\d+)/group', PokerboardGroupViewSet, basename="groups")
 router.register('(?P<pokerboard_id>\d+)/tickets', GetTicketViewSet, basename="tickets")
 router.register('', PokerBoardViewSet, basename="pokerboard")
 
