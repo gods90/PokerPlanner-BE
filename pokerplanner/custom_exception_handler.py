@@ -60,8 +60,11 @@ def handle_exception(exc, context):
 
         if isinstance(error, dict):
             field = next(iter(dict(error_response.data)))
+            field += ': '
+            if field in ['detail: ', 'non_field_errors: ']:
+                field = ''
             error_response.data = get_response(
-                message=field + ": " + get_error_message(error),
+                message= field + get_error_message(error),
                 status_code=error_response.status_code
             )
     return error_response
