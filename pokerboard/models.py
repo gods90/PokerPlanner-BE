@@ -3,9 +3,7 @@ from django.db import models
 from common.models import Timestamp
 
 from group.models import Group
-
 from pokerboard import constants
-
 from user.models import User
 
 

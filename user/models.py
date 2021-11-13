@@ -23,12 +23,15 @@ class User(AbstractUser, Timestamp):
 
     def __str__(self):
         return self.email
+
+    def getId(self):
+        return self.id
     
     def full_name(self):
         """
         Get fullname of the user
         """
-        return self.first_name + self.last_name
+        return self.first_name + " " + self.last_name
     
     def save_base(self, raw=False, force_insert=False,
                  force_update=False, using=None, update_fields=None):

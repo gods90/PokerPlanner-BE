@@ -117,7 +117,7 @@ class InviteCreateSerializer(serializers.Serializer):
             softdeleted_invite.group = group
             softdeleted_invite.user_role = user_role
             softdeleted_invite.status = constants.PENDING
-            users_invited.append(softdeleted_invite.user.email)
+            users_invited.append(softdeleted_invite.email)
             
         remaining_users = users.exclude(email__in=users_invited)
         Invite.objects.bulk_create(

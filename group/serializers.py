@@ -11,14 +11,11 @@ class GroupSerializer(serializers.ModelSerializer):
     name, members, created_by
     """
     users = GetUserSerializer(many=True, required=False)
-    name = serializers.CharField()
-    creator_name = serializers.CharField(
-        read_only=True, source='created_by.full_name'
-    )
+    creator_email = serializers.CharField(read_only=True, source='created_by')
 
     class Meta:
         model = Group
-        fields = ['id', 'created_by', 'name', 'users', 'creator_name']
+        fields = ['id', 'created_by', 'name', 'users', 'creator_email']
 
     def create(self, validated_data):
         """
@@ -106,7 +103,7 @@ class GetGroupSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Group
-        fields = ["name"]
+        fields = ['name','id']
 
 
 class GroupFindSerializer(serializers.ModelSerializer):

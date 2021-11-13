@@ -6,11 +6,18 @@ from rest_framework.authtoken.models import Token
 
 from django.contrib.auth.password_validation import validate_password
 from django.conf import settings
+from django.db.models.query_utils import Q
+
+from django.contrib.auth.password_validation import validate_password
+from django.conf import settings
 
 from group.models import Group
-from invite.models import Invite
+
 from pokerboard import constants
-from pokerboard.models import PokerboardUserGroup
+from pokerboard.models import PokerboardUserGroup, Pokerboard
+
+from invite.models import Invite
+
 from user.models import User
 
 
@@ -18,14 +25,15 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for user
     """
-    groups = serializers.SerializerMethodField()
     invite_id = serializers.CharField(required=False, write_only=True)
+    groups = serializers.SerializerMethodField()
+    pokerboards = serializers.SerializerMethodField()
     token = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = User
         fields = ['id', 'username', 'email',
-                  'password', 'first_name', 'last_name', 'groups', 'invite_id', 'token']
+                  'password', 'first_name', 'last_name', 'groups', 'invite_id', 'token', 'pokerboards']
         extra_kwargs = {
             'password': {'write_only': True},
         }
@@ -61,6 +69,14 @@ class UserSerializer(serializers.ModelSerializer):
         token, _ = Token.objects.get_or_create(user_id=user.id)
         return token.key
 
+    def get_pokerboards(self, user):
+        from pokerboard.serializers import PokerboardUserProfileSerializer
+        res = Pokerboard.objects.filter(
+                Q(manager=user)| Q(invite__email=user.email,invite__status=constants.ACCEPTED
+            )).distinct()
+        serializer = PokerboardUserProfileSerializer(res, many=True)
+        return serializer.data
+        
     def create(self, validated_data):
         """
         Overriding create method to check jwt.

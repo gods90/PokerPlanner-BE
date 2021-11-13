@@ -3,6 +3,7 @@ from rest_framework.generics import CreateAPIView, get_object_or_404, RetrieveAP
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import serializers
+from pokerboard import constants
 
 from pokerboard.models import Ticket
 

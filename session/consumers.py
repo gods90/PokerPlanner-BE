@@ -156,7 +156,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 'type': 'broadcast',
                 'data': {
                     'context': 'Game Info',
-                    'users':serializer.data,
+                    'users': serializer.data,
                     'startTime': json.dumps((str(self.session[0].time_started_at))),
                     'currentTicket': ticket,
                     'message': f"{self.scope['user']} has joined {self.room_name}"
@@ -213,7 +213,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'broadcast',
-                    'data': f"Final estimate of {ticket_key} is {estimate}"
+                    'data': {
+                        "message": f"Final estimate of {ticket_key} is {estimate}",
+                        "context": 'Final Estimate'
+                    }
                 }
             )
             data = getattr(self.channel_layer, self.room_name, {})
@@ -239,7 +242,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
                     self.room_group_name,
                     {
                         'type': 'disconnect',
-                        'data': 'session ended'
+                        'data': f"session ended"
                     }
                 )
                 return
@@ -252,7 +255,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }
             )
         else:
-            await self.send(text_data=json.dumps({'error': 'You do not have permission for this.'}))
+             await self.send(text_data=json.dumps({
+                'message': 'You dont have permission to this action.',
+                'context': 'error'
+            }))
         
     async def estimate(self, event):
         """
@@ -264,7 +270,8 @@ class SessionConsumer(AsyncWebsocketConsumer):
             await self.send(
                 text_data=json.dumps
                 ({
-                    'message': 'Time for the session in over'
+                    'message': 'Time for the session is over',
+                    'context': 'error'
                 })
             )
             return
@@ -287,7 +294,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 manager_room_name,
                 {
                     'type': 'message.manager',
-                    'username': self.scope['user'].email,
+                    "username": self.scope['user'].email,
                     'ticket_key': ticket_key,
                     'estimate': estimate,
                     'id': self.scope['user'].id
@@ -319,7 +326,8 @@ class SessionConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 user_room_name,
                 {
-                    'message': 'Timer not started yet'
+                    'message': 'Timer not started yet',
+                    'context': 'error'
                 }
             )
 
@@ -383,6 +391,26 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }
             )
         except requests.exceptions.HTTPError as e:
-            await self.send(text_data=json.dumps({'error': f'{e}'})) 
+            await self.send(text_data=json.dumps({"error": f'{e}'})) 
         except AttributeError as e:
-            await self.send(text_data=json.dumps({'error': f'{e}'}))
+            await self.send(text_data=json.dumps({"error": f'{e}'}))
+
+    async def end_session(self, event):
+        if self.scope['user'] == self.pokerboard_manager:
+            session = self.session.first()
+            session.status = constants.HASENDED
+            session.save()
+            await self.channel_layer.group_send(
+                self.room_group_name ,
+                {
+                    'type': 'broadcast',
+                    'data': {
+                        'context': 'Session Ended'
+                    }
+                }
+            )
+        else:
+            await self.send(text_data=json.dumps({
+                'message': 'You dont have permission for this action.',
+                'context': 'error'
+            }))

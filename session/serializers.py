@@ -1,5 +1,6 @@
 from django.db.models.expressions import Case, Value, When
 
+from pokerboard.models import Pokerboard
 from rest_framework import serializers
 from pokerboard import constants
 
