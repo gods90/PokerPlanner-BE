@@ -1,21 +1,16 @@
+import jwt
 import re 
+
+from rest_framework import serializers
 
 from django.contrib.auth.password_validation import validate_password
 from django.conf import settings
 
-from rest_framework import serializers
-
 from group.models import Group
-
-from pokerboard.models import PokerboardUserGroup
-
-from user.models import User
-
 from invite.models import Invite
-
 from pokerboard import constants
-
-import jwt
+from pokerboard.models import PokerboardUserGroup
+from user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):

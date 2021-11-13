@@ -15,5 +15,8 @@ class Group(Timestamp):
     )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = ['name', 'created_by']
+
     def __str__(self):
         return self.name
