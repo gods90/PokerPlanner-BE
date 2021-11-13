@@ -38,6 +38,6 @@ SESSION_METHOD_CHOICES = [
     'skip_ticket',
     'start_timer',
     'final_estimate', 
-    'get_ticket_details',
     'end_session'
+    'get_ticket_details'
 ]

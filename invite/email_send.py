@@ -1,37 +1,37 @@
-import os
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.core.mail import send_mail
+from django.conf import settings
 
-username=os.environ["username"]
-password=os.environ["password"]
+from smtplib import SMTPException
 
-def send_mail(html=None,text='',subject='Signup to join pokerplanner',from_email=username,to_emails=[]):
-    msg=MIMEMultipart('alternative')
-    msg['From']=from_email
-    msg['To']=", ".join(to_emails)
-    msg['Subject']=subject
+import jwt
 
-    html="""
-    <!DOCTYPE html>
-    <html lang="en">
-        <body>
-            <p>Hello,</p>
-            <p>You haven't signed up yet click here to join pokerplanner and start estimating tickets.</p>
-            <a href="http://127.0.0.1:5500/index.html#!/">Click here to signup.</a>
-        </body>
-    </html>
+from invite.models import Invite
+
+
+def send_invite_mail(manager_email, recipient, invite_id):
     """
-    
-    html_part = MIMEText(html, 'html')
-    msg.attach(html_part)
-    msg_str=msg.as_string()
-
-
-    server=smtplib.SMTP(host='smtp.gmail.com',port=587)
-    server.ehlo()
-    server.starttls()
-    server.login(username,password)
-    server.sendmail(from_email,to_emails,msg_str)
-    server.quit()
-
+    Function to send invitation to join pokerboard on email.
+    """
+    token = jwt.encode(
+        {'invite_id': invite_id},
+        settings.SECRET_KEY, settings.JWT_HASHING_ALGORITHM
+    )
+    context = {
+        'manager_email': manager_email,
+        'token': token,
+        'domain_name': settings.DOMAIN_NAME + '/signup'
+    }
+    email_subject = 'Invitation to pokerboard',
+    html_body = render_to_string(
+        'invite_pokerboard_email_msg.html', context
+    )
+    plain_text_body = strip_tags(html_body)
+    try:
+        return send_mail(
+            email_subject, plain_text_body, settings.DEFAULT_FROM_EMAIL, recipient, html_message=html_body
+        )
+    except SMTPException:
+        invite = Invite.objects.get(id=invite_id)
+        invite.delete()

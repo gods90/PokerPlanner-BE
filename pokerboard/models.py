@@ -2,7 +2,6 @@ from django.db import models
 
 from common.models import Timestamp
 
-# from common.models import Timestamp
 from group.models import Group
 from pokerboard import constants
 from user.models import User
@@ -84,4 +83,3 @@ class PokerboardUserGroup(Timestamp):
         if self.user:
             return f'{self.pokerboard} -> {self.user}'
         return f'{self.pokerboard} -> {self.group}'
-

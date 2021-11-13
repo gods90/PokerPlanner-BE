@@ -12,8 +12,6 @@ from pokerboard import constants
 from user.models import User
 from pokerboard.models import Pokerboard
 
-# Create your tests here.
-
 
 class InviteTestCases(APITestCase):
     """
@@ -132,9 +130,7 @@ class InviteTestCases(APITestCase):
         }
         response = self.client.post(self.INVITE_URL, data=data)
         expected_data = [
-
             "Email to signup in pokerplanner has been sent.Please check your email."
-
         ]
         self.assertEqual(response.status_code, 400)
         self.assertListEqual(expected_data, response.data)

@@ -41,7 +41,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
 
 ROOT_URLCONF = 'pokerplanner.urls'
@@ -64,10 +64,11 @@ TEMPLATES = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'pokerplanner.authentication.CustomTokenAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'EXCEPTION_HANDLER': 'pokerplanner.custom_exception_handler.handle_exception',
 }
 
 CHANNEL_LAYERS = {
@@ -121,6 +122,8 @@ AUTH_USER_MODEL = "user.User"
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+TOKEN_EXPIRATION_TIME_IN_HOURS = os.environ['TOKEN_EXPIRATION_TIME_IN_HOURS']
+
 JIRA = Jira(
     url=os.environ['JIRA_URL'],
     username=os.environ['JIRA_USERNAME'],
@@ -129,3 +132,14 @@ JIRA = Jira(
 
 ASGI_APPLICATION = 'pokerplanner.asgi.application'
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ['EMAIL_HOST']
+EMAIL_PORT = os.environ['EMAIL_PORT']
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
+DEFAULT_FROM_EMAIL = os.environ['DEFAULT_FROM_EMAIL']
+
+JWT_HASHING_ALGORITHM = os.environ['JWT_HASHING_ALGORITHM']
+DOMAIN_NAME = 'http://127.0.0.1:5500/#!'

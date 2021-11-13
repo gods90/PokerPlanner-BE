@@ -7,6 +7,7 @@ from pokerboard import constants
 
 from pokerboard.models import Ticket
 
+from pokerboard import constants
 from pokerplanner.settings import JIRA
 from session.models import Session
 from session.serializers import CommentSerializer, SessionSerializer

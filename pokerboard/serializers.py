@@ -2,6 +2,8 @@ from django.db.models.aggregates import Max
 
 from rest_framework import serializers, status
 
+from pokerboard import constants
+
 from pokerboard.models import Pokerboard, PokerboardUserGroup, Ticket
 from pokerboard.utils import ticket_responses
 
@@ -13,6 +15,7 @@ class TicketSerializer(serializers.ModelSerializer):
     Serializer for tickets stored in database.
     Sending response, update tickets etc.
     """
+
     class Meta:
         model = Ticket
         fields = ['pokerboard_id', 'ticket_id', 'order', 'estimation_date', 'status']
@@ -21,11 +24,16 @@ class TicketSerializer(serializers.ModelSerializer):
 class TicketsSerializer(serializers.ListSerializer):
     """
     Serializer to validate array of jira-id provided by user.
+    Example - ['MP-1', 'MP-2']
     """
     child = serializers.CharField()
 
 
 class PokerboardUserGroupSerializer(serializers.ModelSerializer):
+    """
+    Pokerboard user group serializer for adding new user in a pokerboard 
+    """
+
     class Meta:
         model = PokerboardUserGroup
         fields = ['id', 'user', 'group', 'role', 'pokerboard']
@@ -35,18 +43,14 @@ class PokerboardMembersSerializer(serializers.ModelSerializer):
     """
     Pokerboard members serializer
     """
-    role = serializers.CharField(source='get_role_display')
-    name = serializers.SerializerMethodField()
-    manager = serializers.CharField(source='user.getId')
-    
-    def get_name(self,instance):
-        user = User.objects.get(id=instance.user_id)
-        name = f"{user.first_name} {user.last_name}"
-        return name
-    
+    role = serializers.CharField(read_only=True, source='get_role_display')
+    name = serializers.CharField(read_only=True, source='user.full_name')
+    email = serializers.CharField(read_only=True, source='user')
+    manager = serializers.CharField(read_only=True, source='user.getId')
+
     class Meta:
         model = PokerboardUserGroup
-        fields = "__all__"
+        fields = ['id', 'pokerboard', 'user', 'role', 'manager', 'name', 'email']
         extra_kwargs = {
             'pokerboard': {'read_only': True},
             'user': {'read_only': True},
@@ -58,19 +62,26 @@ class PokerboardGroupSerializer(serializers.Serializer):
     """
     Pokerboard Group Serializer
     """
-    role = serializers.CharField(source='get_role_display')
     group = serializers.PrimaryKeyRelatedField(queryset=PokerboardUserGroup.objects.all())
-    group_name = serializers.CharField(source='group')
-    
+    group_name = serializers.CharField(read_only=True, source='group')
+    creator_email = serializers.CharField(read_only=True, source='group.created_by')
 
 class PokerboardSerializer(serializers.ModelSerializer):
     """
     Pokerboard serializer
     """
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = Pokerboard
-        fields = ['id', 'title', 'game_duration', 'description', 'manager', 'estimation_type']
+        fields = ['id', 'title', 'game_duration', 'description', 'manager', 'estimation_type', 'role']
 
+    def get_role(self, instance):
+        user = self._kwargs['context']['request'].user
+        if user.id == instance.manager_id:
+            return 'MANAGER'
+        role = PokerboardUserGroup.objects.get(pokerboard_id=instance.id, user_id=user.id).role
+        return constants.ROLE_CHOICES[role][1]
 
 class PokerBoardCreationSerializer(serializers.ModelSerializer):
     """
@@ -86,7 +97,9 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Pokerboard
-        fields = '__all__'
+        fields = [
+            'id', 'manager', 'ticket_responses', 'title', 'description', 'game_duration', 'jql', 'tickets', 'sprint_id'
+        ]
 
     def get_ticket_responses(self,instance):
         return ticket_responses(instance)
@@ -96,6 +109,10 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
         Imported tickets from JIRA and created pokerboard only if 
         atleast one valid ticket was found.
         """
+        validated_data.pop('sprint_id', None)
+        validated_data.pop('tickets', None)
+        validated_data.pop('jql', None)
+        ticket_responses = self.data['ticket_responses']
         new_pokerboard = {key: val for key, val in self.data.items() if key not in [
             'sprint_id', 'tickets', 'jql']}
         ticket_responses = new_pokerboard.pop('ticket_responses')
@@ -109,8 +126,6 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
 
         manager = User.objects.get(id=new_pokerboard["manager"])
         new_pokerboard["manager"] = manager
-        pokerboard = Pokerboard(**new_pokerboard)
-        pokerboard.save()
 
         ticket_responses = [
             (
@@ -118,6 +133,11 @@ class PokerBoardCreationSerializer(serializers.ModelSerializer):
             ) for ticket_response in ticket_responses if ticket_response['status_code'] == 200
         ]
 
+        if len(ticket_responses) == 0:
+            raise serializers.ValidationError('Invalid tickets!')
+
+        pokerboard = Pokerboard.objects.create(**validated_data)
+        
         Ticket.objects.bulk_create(
             [
                 Ticket(
@@ -162,3 +182,13 @@ class PokerboardTicketAddSerializer(serializers.Serializer):
             ]
         )
         return validated_data
+
+
+class PokerboardUserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer to display pokerboard details on user profile
+    """
+
+    class Meta:
+        model = Pokerboard
+        fields = ['id', 'title']
