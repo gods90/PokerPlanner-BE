@@ -107,3 +107,14 @@ class GetGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ["name"]
+
+
+class GroupFindSerializer(serializers.ModelSerializer):
+    """
+    Serializer to return group to add to the pokerboard
+    """
+    created_by_email = serializers.EmailField(source='created_by')
+    
+    class Meta:
+        model = Group
+        fields = ['id', 'name', 'created_by_email']

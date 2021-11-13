@@ -45,7 +45,7 @@ class InviteCreateSerializer(serializers.Serializer):
     """
     Serializer to create new invite to pokerboard
     """
-    group_id = serializers.PrimaryKeyRelatedField(
+    group = serializers.PrimaryKeyRelatedField(
         queryset=Group.objects.all(), required=False
     )
     email = serializers.EmailField(required=False)
@@ -109,7 +109,7 @@ class InviteCreateSerializer(serializers.Serializer):
         group = attrs.get('group', None)
         user_role = attrs.get('user_role', constants.PLAYER)
         users_invited = []
-        softdeleted_invites = Invite.objects.select_related('user').filter(
+        softdeleted_invites = Invite.objects.filter(
             pokerboard_id=pokerboard.id, email__in=[user.email for user in users]
         )
         
