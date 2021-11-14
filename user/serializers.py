@@ -178,3 +178,15 @@ class EstimateSerializer(serializers.ModelSerializer):
             return jira_response['customfield_10016']
         except Exception as e:
             raise serializers.ValidationError(e)
+
+
+class UserTicketSerializer(serializers.ModelSerializer):
+    """
+    Serializer to return the tickets user has estimated
+    """
+    ticket = serializers.CharField(source='ticket.jira_id')
+    estimate_date = serializers.CharField(source='ticket.estimation_date')
+    
+    class Meta:
+        model = UserEstimate
+        fields = ['user', 'ticket', 'estimate', 'estimate_date']
