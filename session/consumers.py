@@ -42,7 +42,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
         #Session is ongoing and is valid but user is not part of pokerboard.
         pokerboard = Pokerboard.objects.filter(
             Q(manager=self.scope['user']) 
-            | Q(invite__user=self.scope['user'], 
+            | Q(invite__email=self.scope['user'].email, 
             invite__status=constants.ACCEPTED)
         ).distinct()
         

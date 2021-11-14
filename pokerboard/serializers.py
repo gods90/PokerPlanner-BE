@@ -51,7 +51,7 @@ class PokerboardMembersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PokerboardUserGroup
-        fields = ['id', 'pokerboard', 'user', 'role', 'manager', 'name', 'email']
+        fields = ['id', 'pokerboard', 'user', 'role', 'manager', 'name', 'email', 'group']
         extra_kwargs = {
             'pokerboard': {'read_only': True},
             'user': {'read_only': True},
@@ -72,10 +72,11 @@ class PokerboardSerializer(serializers.ModelSerializer):
     Pokerboard serializer
     """
     role = serializers.SerializerMethodField()
+    manager_email = serializers.CharField(source='manager')
 
     class Meta:
         model = Pokerboard
-        fields = ['id', 'title', 'game_duration', 'description', 'manager', 'estimation_type', 'role']
+        fields = ['id', 'title', 'game_duration', 'description', 'manager', 'estimation_type', 'role', 'manager_email']
 
     def get_role(self, instance):
         user = self._kwargs['context']['request'].user
