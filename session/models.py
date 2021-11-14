@@ -23,6 +23,11 @@ class Session(Timestamp):
 
     def __str__(self):
         return f"{self.title} -> {self.pokerboard}"    
+    
+    def started_at(self):
+        if self.time_started_at is None:
+            return 'NOT STARTED YET'
+        return self.time_started_at.strftime(" %H:%M:%S %B %d, %Y")
 
 
 class UserEstimate(Timestamp):

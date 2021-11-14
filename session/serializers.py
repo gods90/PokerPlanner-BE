@@ -16,6 +16,18 @@ class TicketSerializerSessionCreate(serializers.Serializer):
     order = serializers.IntegerField()
 
 
+class SessionGetSerializer(serializers.ModelSerializer):
+    """
+    Serializer to show session details
+    """
+    pokerboard_title = serializers.CharField(source='pokerboard')
+    pokerboard_manager = serializers.CharField(source='pokerboard.manager')
+    time_started_at = serializers.CharField(source='started_at')
+    
+    class Meta:
+        model = Session
+        fields = ['id', 'title', 'time_started_at', 'pokerboard_title', 'pokerboard_manager']
+
 class SessionSerializer(serializers.ModelSerializer):
     """
     Serializer for session

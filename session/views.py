@@ -1,27 +1,45 @@
-from rest_framework import viewsets, status
+from django.db.models.query_utils import Q
+
+from rest_framework import mixins, viewsets, status
 from rest_framework.generics import CreateAPIView, get_object_or_404, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import serializers
-from pokerboard import constants
 
-from pokerboard.models import Ticket
+from pokerboard import constants
+from pokerboard.models import Pokerboard, Ticket
 
 from pokerboard import constants
 from pokerplanner.settings import JIRA
+
 from session.models import Session
-from session.serializers import CommentSerializer, SessionSerializer
+from session.serializers import CommentSerializer, SessionGetSerializer, SessionSerializer
 
 
-class SessionViewSet(viewsets.ModelViewSet):
+class SessionViewSet(mixins.CreateModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.ListModelMixin,
+                    viewsets.GenericViewSet):
     """
     Session View for CRUD operations
     """
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ['get', 'post']
     
+    def get_serializer_class(self):
+        if self.action in ['list']:
+            return SessionGetSerializer
+        return super().get_serializer_class()
+
+    def get_queryset(self):
+        user = self.request.user
+        pokerboards = Pokerboard.objects.filter(
+                Q(manager=user)| Q(invite__email=user.email,invite__status=constants.ACCEPTED)
+            ).distinct()
+        sessions = Session.objects.filter(pokerboard__in=pokerboards, status=constants.ONGOING)
+        return sessions
+
     def get_object(self):
         """
         To get the active session of the pokerboard.
