@@ -166,9 +166,10 @@ class EstimateSerializer(serializers.ModelSerializer):
     """
     actual_estimate = serializers.SerializerMethodField()
     ticket = serializers.CharField(source='ticket.jira_id')
+    user_estimate = serializers.CharField(source='estimate')
     class Meta:
         model = UserEstimate
-        fields = ['id', 'actual_estimate', 'estimation_duration', 'estimate', 'ticket']
+        fields = ['id', 'actual_estimate', 'estimation_duration', 'user_estimate', 'ticket']
     
     def get_actual_estimate(self, instance):
         ticket_jira_id = Ticket.objects.get(id=instance.ticket_id).ticket_id
