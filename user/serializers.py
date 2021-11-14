@@ -14,9 +14,11 @@ from django.conf import settings
 from group.models import Group
 
 from pokerboard import constants
-from pokerboard.models import PokerboardUserGroup, Pokerboard
+from pokerboard.models import PokerboardUserGroup, Pokerboard, Ticket
 
 from invite.models import Invite
+from pokerplanner.settings import JIRA
+from session.models import UserEstimate
 
 from user.models import User
 
@@ -156,3 +158,22 @@ class ChangePasswordSerializer(serializers.Serializer):
         instance.set_password(validated_data['password'])
         instance.save()
         return instance
+
+
+class EstimateSerializer(serializers.ModelSerializer):
+    """
+    Serializer to get estimate
+    """
+    actual_estimate = serializers.SerializerMethodField()
+    ticket = serializers.CharField(source='ticket.jira_id')
+    class Meta:
+        model = UserEstimate
+        fields = ['id', 'actual_estimate', 'estimation_duration', 'estimate', 'ticket']
+    
+    def get_actual_estimate(self, instance):
+        ticket_jira_id = Ticket.objects.get(id=instance.ticket_id).ticket_id
+        try:
+            jira_response = JIRA.issue(key=ticket_jira_id)['fields']
+            return jira_response['customfield_10016']
+        except Exception as e:
+            raise serializers.ValidationError(e)

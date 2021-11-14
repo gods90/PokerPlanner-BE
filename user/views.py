@@ -1,10 +1,11 @@
-from rest_framework import generics, status
+from rest_framework import generics, mixins, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.views import ObtainAuthToken
+from session.models import UserEstimate
 
 from user.models import User
-from user.serializers import (ChangePasswordSerializer,
+from user.serializers import (ChangePasswordSerializer, EstimateSerializer,
                                          UserSerializer)
 from user.tasks import send_welcome_mail_task
 
@@ -71,3 +72,14 @@ class LogoutView(generics.DestroyAPIView):
     def get_object(self):
         token = self.request.auth
         return token
+
+
+class EstimateViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    """
+    View to get the estimate of a ticket done by user and actual estimate
+    """
+    serializer_class = EstimateSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return UserEstimate.objects.filter(user_id=user.id)
