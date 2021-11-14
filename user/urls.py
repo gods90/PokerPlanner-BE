@@ -9,7 +9,7 @@ router = DefaultRouter()
 router.register(r'estimate', EstimateViewSet, basename='estimate')
 
 urlpatterns = [
-    path('', include(router.urls)),
     path('', UserViewSet.as_view(), name="user"),
+    path('', include(router.urls)),
     path('changepassword/', ChangePasswordView.as_view()),
 ]
