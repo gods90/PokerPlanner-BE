@@ -55,6 +55,15 @@ class SessionConsumer(AsyncWebsocketConsumer):
         if self.scope['user'] in all_members:
             await self.accept()
             self.pokerboard_manager = pokerboard.first().manager
+            if self.scope['user'] == self.pokerboard_manager and hasattr(self.channel_layer, self.room_name):
+                data = getattr(self.channel_layer, self.room_name, {})
+                if 'estimates' in data:
+                    self.estimates = data['estimates']
+                if 'timer' in data:
+                    self.timer = data['timer']
+                if 'currentTicket' in data:
+                    self.currentTicket = data['currentTicket']
+
             await self.channel_layer.group_send(
                 self.personal_group ,
                 {
@@ -62,6 +71,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }
             )
             return
+
         all_members.append(self.scope['user'])
         setattr(self.channel_layer, self.room_group_name, all_members)
         
@@ -83,6 +93,17 @@ class SessionConsumer(AsyncWebsocketConsumer):
         if not hasattr(self.channel_layer, self.room_name):
             setattr(self.channel_layer, self.room_name, {})
 
+        if self.scope['user'] == self.pokerboard_manager and hasattr(self.channel_layer, self.room_name):
+                data = getattr(self.channel_layer, self.room_name, {})
+                if 'estimates' in data:
+                    self.estimates = data['estimates']
+                if 'timer' in data:
+                    self.timer = data['timer']
+                if 'currentTicket' in data:
+                    self.currentTicket = data['currentTicket']
+                else:
+                    self.currentTicket = None
+
         await self.channel_layer.group_send(
             self.personal_group ,
             {
@@ -90,12 +111,6 @@ class SessionConsumer(AsyncWebsocketConsumer):
             }
         )
         
-        if self.scope['user'] == self.pokerboard_manager and hasattr(self.channel_layer, self.room_name):
-                data = getattr(self.channel_layer, self.room_name, {})
-                if 'estimates' in data:
-                    self.estimates = data['estimates']
-                if 'timer' in data:
-                    self.timer = data['timer']
 
     async def disconnect(self, code):
         """
@@ -141,25 +156,35 @@ class SessionConsumer(AsyncWebsocketConsumer):
         """
         all_members = getattr(self.channel_layer, self.room_group_name, [])
         serializer = UserSerializer(all_members, many=True)
-        data = getattr(self.channel_layer, self.room_name, {})
+        data = getattr(self.channel_layer,self.room_name,{})
         if 'currentTicket' in data:
-            ticket_serializer = TicketSerializer(data['currentTicket'])
             self.currentTicket = data['currentTicket']
+            ticket_serializer = TicketSerializer(self.currentTicket)
             ticket = ticket_serializer.data
         else:
             self.currentTicket = None
             ticket = None
+        if 'estimates' in data:
+            estimates = data['estimates']
+            if self.scope['user'] != self.pokerboard_manager:
+                temp = list(estimates.keys())
+            else:
+                temp = {key:value[0] for (key,value) in estimates.items()}
+            estimates = temp
+        else:
+            estimates = None
         # Send message to personal group
         await self.channel_layer.group_send(
             self.room_group_name ,
             {
                 'type': 'broadcast',
                 'data': {
-                    'context': 'Game Info',
-                    'users': serializer.data,
-                    'startTime': json.dumps((str(self.session[0].time_started_at))),
-                    'currentTicket': ticket,
-                    'message': f"{self.scope['user']} has joined {self.room_name}"
+                    "context": "Game Info",
+                    "users":serializer.data,
+                    "startTime": json.dumps((str(self.session[0].time_started_at))),
+                    "currentTicket": ticket,
+                    "message": f"{self.scope['user']} has joined {self.room_name}",
+                    "estimates": estimates
                 }
             }
         )   
@@ -200,10 +225,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
         session = Session.objects.get(id=self.scope['url_route']['kwargs']['session_id'])
         deck_type = session.pokerboard.estimation_type
         ticket_key = self.currentTicket.ticket_id
-        estimate = int(event['message']['estimate'])
+        estimate = int(event["message"]["estimate"])
         
         if not check_estimate_value(deck_type, estimate):
-            raise ValidationError('Invalid estimate value')
+            raise ValidationError("Invalid estimate value")
         
         if self.scope['user'] == self.pokerboard_manager:
             jira = settings.JIRA
@@ -227,7 +252,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
             self.currentTicket.save()
             
             if hasattr(self, 'estimates') and len(self.estimates) > 0:
-                set_user_estimates(self.estimates, self.currentTicket)
+                set_user_estimates(self.estimates, self.currentTicket.ticket_id)
                 
             self.currentTicket = get_current_ticket(self.session.first().id)
             data = getattr(self.channel_layer, self.room_name, {})
@@ -264,28 +289,40 @@ class SessionConsumer(AsyncWebsocketConsumer):
         """
         Estimates tickets by user and manager and also update in jira.
         """
-        session = Session.objects.get(id=self.scope['url_route']['kwargs']['session_id'])
+        session = self.session.first()
         deck_type = session.pokerboard.estimation_type
         if session.time_started_at != None and timezone.now() - session.time_started_at > session.pokerboard.game_duration:
             await self.send(
                 text_data=json.dumps
                 ({
-                    'message': 'Time for the session is over',
-                    'context': 'error'
+                    "message": "Time for the session is over",
+                    "context": "error"
+                })
+            )
+            return
+        if session.time_started_at == None :
+            await self.send(
+                text_data=json.dumps
+                ({
+                    "message": "Session not started yet",
+                    "context": "error"
                 })
             )
             return
         try:
             ticket_key = self.currentTicket.ticket_id
-            estimate = int(event['message']['estimate'])
+            estimate = int(event["message"]["estimate"])
             if not check_estimate_value(deck_type, estimate):
-                raise ValidationError('Invalid estimate value')
+                raise ValidationError("Invalid estimate value")
             
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'broadcast',
-                    'data': f"{self.scope['user'].email} has estimated {ticket_key}"
+                    'data': {
+                        'context': 'estimate',
+                        'email': self.scope['user'].email
+                    }
                 }
             )
 
@@ -293,8 +330,8 @@ class SessionConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 manager_room_name,
                 {
-                    'type': 'message.manager',
-                    "username": self.scope['user'].email,
+                    'type': 'message_manager',
+                    "email": self.scope['user'].email,
                     'ticket_key': ticket_key,
                     'estimate': estimate,
                     'id': self.scope['user'].id
@@ -305,31 +342,32 @@ class SessionConsumer(AsyncWebsocketConsumer):
         except KeyError as e:
             await self.send(text_data=json.dumps({'error': f'{e}'}))
         except requests.exceptions.HTTPError as e:
-            await self.send(text_data=json.dumps({'error': f'{e}'}))        
+            await self.send(text_data=json.dumps({'error': f'{e}'}))
+        except AttributeError as e:
+            await self.send(text_data=json.dumps({'error': f'{e}'}))
 
     async def message_manager(self, event):
         """
         Send user estimate to manager
         """
         try:
-            self.estimates[event['username']] = [event['estimate'], self.channel_layer.timer - datetime.now()]
+            data = getattr(self.channel_layer, self.room_name, {})
+            timer = data['timer']
+            self.estimates[event["email"]] = [event["estimate"], timer - datetime.now()]
+            data = getattr(self.channel_layer, self.room_name, {})
+            data['estimates'] = self.estimates
+            setattr(self.channel_layer, self.room_name, data)
             await self.send(
                 text_data=json.dumps
                 ({
-                    'username': event['username'],
-                    'ticket': event['ticket_key'],
-                    'estimate': event['estimate'],
+                    'context': 'user estimate',
+                    "email": event["email"],
+                    "ticket": event["ticket_key"],
+                    "estimate": event["estimate"],
                 }),
             )
         except AttributeError as e:
-            user_room_name = f"{self.room_name}_user_{event['id']}"
-            await self.channel_layer.group_send(
-                user_room_name,
-                {
-                    'message': 'Timer not started yet',
-                    'context': 'error'
-                }
-            )
+            await self.send(text_data=json.dumps({'error': f'{e}'}))
 
     async def start_timer(self, event):
         self.estimates = {}
@@ -352,13 +390,13 @@ class SessionConsumer(AsyncWebsocketConsumer):
                     'type': 'broadcast',
                     'data': {
                         'context': 'Timer Started',
-                        'startTime': json.dumps(self.session[0].time_started_at.strftime('%H:%M:%S')),
+                        'startTime': json.dumps(self.session[0].time_started_at.strftime("%H:%M:%S")),
                         'currentTicket': serializer.data
                     }
                 }
             )
         else:
-            await self.send(text_data=json.dumps({'error': "Can't start time."}))
+            await self.send(text_data=json.dumps({"error": "Can't start time."}))
 
     async def send_current_ticket(self, event):
         await self.channel_layer.group_send(
@@ -378,8 +416,8 @@ class SessionConsumer(AsyncWebsocketConsumer):
             self.currentTicket = data['currentTicket']
             ticket_key = self.currentTicket.ticket_id
             jira = settings.JIRA
-            ticket = jira.get_issue(ticket_key, fields=['summary', 'description'])
-            # Send message to personal group
+            ticket = jira.get_issue(ticket_key, fields=["summary", "description"])
+            
             await self.channel_layer.group_send(
                 self.room_group_name ,
                 {
@@ -405,7 +443,8 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 {
                     'type': 'broadcast',
                     'data': {
-                        'context': 'Session Ended'
+                        'context': 'Session Ended',
+                        'message': 'Session has ended'
                     }
                 }
             )
