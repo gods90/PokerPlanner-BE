@@ -39,5 +39,6 @@ SESSION_METHOD_CHOICES = [
     'start_timer',
     'final_estimate', 
     'end_session',
-    'get_ticket_details'
+    'get_ticket_details',
+    'disconnect'
 ]
