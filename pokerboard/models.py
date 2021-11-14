@@ -64,6 +64,9 @@ class Ticket(Timestamp):
 
     def __str__(self):
         return f'{self.ticket_id} -> {self.pokerboard}'
+    
+    def jira_id(self):
+        return self.ticket_id
 
 
 class PokerboardUserGroup(Timestamp):
