@@ -53,23 +53,24 @@ class SessionConsumer(AsyncWebsocketConsumer):
             
         all_members = getattr(self.channel_layer, self.room_group_name, [])
         if self.scope['user'] in all_members:
-            await self.accept()
-            self.pokerboard_manager = pokerboard.first().manager
-            if self.scope['user'] == self.pokerboard_manager and hasattr(self.channel_layer, self.room_name):
-                data = getattr(self.channel_layer, self.room_name, {})
-                if 'estimates' in data:
-                    self.estimates = data['estimates']
-                if 'timer' in data:
-                    self.timer = data['timer']
-                if 'currentTicket' in data:
-                    self.currentTicket = data['currentTicket']
+            await self.close()
+            # await self.accept()
+            # self.pokerboard_manager = pokerboard.first().manager
+            # if self.scope['user'] == self.pokerboard_manager and hasattr(self.channel_layer, self.room_name):
+            #     data = getattr(self.channel_layer, self.room_name, {})
+            #     if 'estimates' in data:
+            #         self.estimates = data['estimates']
+            #     if 'timer' in data:
+            #         self.timer = data['timer']
+            #     if 'currentTicket' in data:
+            #         self.currentTicket = data['currentTicket']
 
-            await self.channel_layer.group_send(
-                self.personal_group ,
-                {
-                    'type': 'start_game',
-                }
-            )
+            # await self.channel_layer.group_send(
+            #     self.personal_group ,
+            #     {
+            #         'type': 'start_game',
+            #     }
+            # )
             return
 
         all_members.append(self.scope['user'])
@@ -111,7 +112,6 @@ class SessionConsumer(AsyncWebsocketConsumer):
             }
         )
         
-
     async def disconnect(self, code):
         """
         Runs when connection is closed.
@@ -128,7 +128,6 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 self.channel_name
             )
-            
             # Send message to room group
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -142,6 +141,7 @@ class SessionConsumer(AsyncWebsocketConsumer):
                 }
             )
             setattr(self.channel_layer, self.room_group_name, all_members)
+            self.close()
         
     async def broadcast(self, event):
         """
@@ -166,14 +166,12 @@ class SessionConsumer(AsyncWebsocketConsumer):
             ticket = None
         if 'estimates' in data:
             estimates = data['estimates']
-            if self.scope['user'] != self.pokerboard_manager:
-                temp = list(estimates.keys())
-            else:
-                temp = {key:value[0] for (key,value) in estimates.items()}
-            estimates = temp
+            toUser = list(estimates.keys())
+            toManager = {key:value[0] for (key,value) in estimates.items()}
         else:
-            estimates = None
-        # Send message to personal group
+            toUser = None
+            toManager = None
+        # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name ,
             {
@@ -184,10 +182,26 @@ class SessionConsumer(AsyncWebsocketConsumer):
                     "startTime": json.dumps((str(self.session[0].time_started_at))),
                     "currentTicket": ticket,
                     "message": f"{self.scope['user']} has joined {self.room_name}",
-                    "estimates": estimates
+                    "estimates": toUser
                 }
             }
         )   
+
+        manager_room_name = f'{self.room_name}_user_{self.pokerboard_manager.id}'
+        await self.channel_layer.group_send(
+            manager_room_name ,
+            {
+                'type': 'broadcast',
+                'data': {
+                    "context": "Game Info",
+                    "users":serializer.data,
+                    "startTime": json.dumps((str(self.session[0].time_started_at))),
+                    "currentTicket": ticket,
+                    "message": f"{self.scope['user']} has joined {self.room_name}",
+                    "estimates": toManager
+                }
+            }
+        )
         
     async def skip_ticket(self, event):
         """
@@ -253,6 +267,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
             
             if hasattr(self, 'estimates') and len(self.estimates) > 0:
                 set_user_estimates(self.estimates, self.currentTicket.ticket_id)
+                self.estimates = {}
+                data = getattr(self.channel_layer, self.room_name, {})
+                data['estimates'] = self.estimates
+                setattr(self.channel_layer, self.room_name, data)
                 
             self.currentTicket = get_current_ticket(self.session.first().id)
             data = getattr(self.channel_layer, self.room_name, {})
@@ -260,14 +278,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
             setattr(self.channel_layer, self.room_name, data)
             
             if self.currentTicket == None:
-                session = self.session.first()
-                session.status = constants.HASENDED
-                session.save()
                 await self.channel_layer.group_send(
-                    self.room_group_name,
+                    self.personal_group,
                     {
-                        'type': 'disconnect',
-                        'data': f"session ended"
+                        'type': 'end_session'
                     }
                 )
                 return
