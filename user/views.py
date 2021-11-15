@@ -6,7 +6,7 @@ from session.models import UserEstimate
 
 from user.models import User
 from user.serializers import (ChangePasswordSerializer, EstimateSerializer,
-                                         UserSerializer)
+                                         UserSerializer, UserTicketSerializer)
 from user.tasks import send_welcome_mail_task
 
 
@@ -79,6 +79,19 @@ class EstimateViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     View to get the estimate of a ticket done by user and actual estimate
     """
     serializer_class = EstimateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return UserEstimate.objects.filter(user_id=user.id)
+
+
+class UserTicketViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    """
+    View to get tickets estimated by user
+    """
+    serializer_class = UserTicketSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user

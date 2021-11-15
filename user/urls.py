@@ -3,10 +3,11 @@ from django.urls import path
 
 from rest_framework.routers import DefaultRouter
 
-from user.views import ChangePasswordView, EstimateViewSet, UserViewSet
+from user.views import ChangePasswordView, EstimateViewSet, UserViewSet, UserTicketViewSet
 
 router = DefaultRouter()
 router.register(r'estimate', EstimateViewSet, basename='estimate')
+router.register(r'tickets', UserTicketViewSet, basename='tickets')
 
 urlpatterns = [
     path('', UserViewSet.as_view(), name="user"),
