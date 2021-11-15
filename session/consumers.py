@@ -1,7 +1,6 @@
 import json
 import requests
-from datetime import datetime
-
+from datetime import datetime, date
 from channels.generic.websocket import AsyncWebsocketConsumer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -265,6 +264,10 @@ class SessionConsumer(AsyncWebsocketConsumer):
             self.currentTicket.status = constants.ESTIMATED
             self.currentTicket.save()
             
+            ticket = Ticket.objects.get(ticket_id=self.currentTicket.ticket_id)
+            ticket.estimation_date = date.today()
+            ticket.save()
+
             if hasattr(self, 'estimates') and len(self.estimates) > 0:
                 set_user_estimates(self.estimates, self.currentTicket.ticket_id)
                 self.estimates = {}

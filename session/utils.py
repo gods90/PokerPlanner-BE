@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict
 
 from django.db.models import Max
@@ -38,11 +39,12 @@ def set_user_estimates(user_estimates: Dict, ticket_key: str) -> None:
     """
     Saves estimate given by user in database.
     """
+    ticket = Ticket.objects.get(ticket_id=ticket_key)
     users_estimates_data = []
-    for user,data in user_estimates.items():
+    for user, data in user_estimates.items():
         user_estimate_data = {}
         user_estimate_data['user'] = User.objects.get(email=user)
-        user_estimate_data['ticket'] = Ticket.objects.get(ticket_id=ticket_key)
+        user_estimate_data['ticket'] = ticket
         user_estimate_data['estimate'] = data[0]
         user_estimate_data['estimation_duration'] = data[1]
         users_estimates_data.append(user_estimate_data)

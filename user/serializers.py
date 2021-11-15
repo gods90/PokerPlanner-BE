@@ -86,8 +86,9 @@ class UserSerializer(serializers.ModelSerializer):
         invite_id = None
         if 'invite_id' in validated_data.keys():
             invite = self.context['invite']
+            invite_id = validated_data['invite_id']
             if invite.email != validated_data['email']:
-                raise serializers.ValidationError('This token was not intended for you.')
+                raise serializers.ValidationError('This invite was not intended for you.')
             del validated_data['invite_id']
         user = User(**validated_data)
         user.save()
